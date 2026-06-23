@@ -10,6 +10,9 @@ struct RootView: View {
             ReportsView()
                 .tabItem { Label("レポート", systemImage: "chart.pie") }
 
+            BudgetView()
+                .tabItem { Label("予算", systemImage: "chart.bar.doc.horizontal") }
+
             NavigationStack {
                 SettingsView()
             }

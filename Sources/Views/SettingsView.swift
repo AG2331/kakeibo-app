@@ -17,6 +17,19 @@ struct SettingsView: View {
                 } label: {
                     Label("口座・支払い方法", systemImage: "creditcard")
                 }
+                NavigationLink {
+                    RecurringListView()
+                } label: {
+                    Label("定期取引", systemImage: "arrow.triangle.2.circlepath")
+                }
+            }
+
+            Section("データ") {
+                NavigationLink {
+                    DataView()
+                } label: {
+                    Label("エクスポート・バックアップ", systemImage: "tray.and.arrow.up")
+                }
             }
 
             Section("表示") {

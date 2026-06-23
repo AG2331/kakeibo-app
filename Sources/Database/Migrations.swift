@@ -2,7 +2,7 @@ import Foundation
 
 extension Database {
     /// 現在のスキーマバージョン。変更時はインクリメントして差分DDLを足す。
-    static let schemaVersion: Int32 = 1
+    static let schemaVersion: Int32 = 2
 
     func migrateIfNeeded() throws {
         let current = userVersion()
@@ -11,6 +11,9 @@ extension Database {
         if current < 1 {
             applyV1()
             seedDefaults()
+        }
+        if current < 2 {
+            applyV2()
         }
         // 以降のバージョンはここに分岐を追加する。
 
@@ -81,6 +84,26 @@ extension Database {
             """,
         ]
         for stmt in ddl { exec(stmt) }
+    }
+
+    /// v2: 定期取引ルール。
+    private func applyV2() {
+        exec(
+            """
+            CREATE TABLE recurring_rules (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              type TEXT NOT NULL,
+              amount INTEGER NOT NULL,
+              category_id INTEGER REFERENCES categories(id),
+              account_id INTEGER NOT NULL REFERENCES accounts(id),
+              to_account_id INTEGER REFERENCES accounts(id),
+              memo TEXT,
+              frequency TEXT NOT NULL,
+              interval INTEGER NOT NULL DEFAULT 1,
+              next_date TEXT NOT NULL,
+              end_date TEXT
+            )
+            """)
     }
 
     /// デフォルトカテゴリ・現金口座・既定設定を投入する。

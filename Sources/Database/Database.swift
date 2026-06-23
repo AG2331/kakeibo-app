@@ -37,6 +37,12 @@ final class Database {
 
     deinit { sqlite3_close(db) }
 
+    /// 接続を明示的に閉じる（バックアップ復元時にファイルを差し替える前に呼ぶ）。
+    func closeConnection() {
+        sqlite3_close(db)
+        db = nil
+    }
+
     // MARK: - 実行系
 
     /// DDL や PRAGMA など、結果を返さない文。

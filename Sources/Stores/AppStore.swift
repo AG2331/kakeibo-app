@@ -4,11 +4,16 @@ import SwiftUI
 /// アプリ全体の状態とDBアクセスを束ねる。
 @MainActor
 final class AppStore: ObservableObject {
-    let db: Database
-    let transactions: TransactionRepository
-    let categories: CategoryRepository
-    let accounts: AccountRepository
-    let settingsRepo: SettingsRepository
+    private(set) var db: Database
+    let dbPath: String
+
+    // リポジトリは DB を差し替え（復元）できるよう計算プロパティにする。
+    var transactions: TransactionRepository { TransactionRepository(db: db) }
+    var categories: CategoryRepository { CategoryRepository(db: db) }
+    var accounts: AccountRepository { AccountRepository(db: db) }
+    var settingsRepo: SettingsRepository { SettingsRepository(db: db) }
+    var budgets: BudgetRepository { BudgetRepository(db: db) }
+    var recurring: RecurringRepository { RecurringRepository(db: db) }
 
     @Published var selectedMonth: Date
     @Published var monthTransactions: [TxRecord] = []
@@ -18,16 +23,15 @@ final class AppStore: ObservableObject {
     @Published var accountList: [Account] = []
     @Published var accountBalances: [Int64: Int] = [:]
     @Published var settings: AppSettings = .default
+    @Published var recurringRules: [RecurringRule] = []
 
-    init(db: Database) {
+    init(db: Database, dbPath: String) {
         self.db = db
-        self.transactions = TransactionRepository(db: db)
-        self.categories = CategoryRepository(db: db)
-        self.accounts = AccountRepository(db: db)
-        self.settingsRepo = SettingsRepository(db: db)
+        self.dbPath = dbPath
         let now = Date()
         self.selectedMonth = Dates.shiftMonth(now, by: 0)
         loadSettings()
+        applyDueRecurring()
         reload()
     }
 
@@ -39,8 +43,11 @@ final class AppStore: ObservableObject {
         let path = dir.appendingPathComponent("kakeibo.sqlite").path
         // swiftlint:disable:next force_try
         let db = try! Database(path: path)
-        return AppStore(db: db)
+        return AppStore(db: db, dbPath: path)
     }
+
+    /// 集計の対象 year-month（YYYY-MM）。
+    var currentYearMonth: String { Dates.ym(selectedMonth) }
 
     // MARK: - 読み込み
 
@@ -62,6 +69,7 @@ final class AppStore: ObservableObject {
         accountBalances = Dictionary(uniqueKeysWithValues: accountList.compactMap { a in
             a.id.map { ($0, accounts.balance(id: $0)) }
         })
+        recurringRules = recurring.all()
     }
 
     func shiftMonth(by delta: Int) {
@@ -72,11 +80,7 @@ final class AppStore: ObservableObject {
     // MARK: - 取引
 
     func save(_ record: TxRecord) {
-        if record.id == nil {
-            transactions.insert(record)
-        } else {
-            transactions.update(record)
-        }
+        if record.id == nil { transactions.insert(record) } else { transactions.update(record) }
         reload()
     }
 
@@ -103,7 +107,6 @@ final class AppStore: ObservableObject {
         reload()
     }
 
-    /// 使用中（取引から参照）なら false を返し、削除しない。
     @discardableResult
     func deleteCategory(_ category: Category) -> Bool {
         guard let id = category.id else { return false }
@@ -158,7 +161,6 @@ final class AppStore: ObservableObject {
 
     // MARK: - 集計・レポート
 
-    /// 選択中の期間のカテゴリ別支出（多い順）。
     func expenseBreakdown() -> [CategorySlice] {
         let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
         let map = transactions.expenseByCategory(start: start, end: end)
@@ -168,7 +170,6 @@ final class AppStore: ObservableObject {
         .sorted { $0.amount > $1.amount }
     }
 
-    /// 直近 months か月分の月別収支（古い→新しい順）。
     func monthlyTrend(months: Int = 6) -> [MonthBar] {
         (0..<months).reversed().map { offset in
             let anchor = Dates.shiftMonth(selectedMonth, by: -offset)
@@ -179,11 +180,152 @@ final class AppStore: ObservableObject {
         }
     }
 
-    /// 前期間（1つ前の月）のサマリ。前月比の算出に使う。
     func previousSummary() -> MonthlySummary {
         let anchor = Dates.shiftMonth(selectedMonth, by: -1)
         let (start, end) = Dates.monthRange(anchor, startDay: settings.monthStartDay)
         return transactions.summary(start: start, end: end)
+    }
+
+    /// 日別の支出合計（カレンダー表示用）。"YYYY-MM-DD" -> 支出額。
+    func dailyExpense() -> [String: Int] {
+        var result: [String: Int] = [:]
+        for t in monthTransactions where t.type == .expense {
+            result[t.date, default: 0] += t.amount
+        }
+        return result
+    }
+
+    // MARK: - 予算管理
+
+    /// 当月の予算消化状況。全体予算 + カテゴリ別予算（設定があるもの）。
+    func budgetProgress() -> (overall: BudgetProgress?, categories: [BudgetProgress]) {
+        let ym = currentYearMonth
+        let all = budgets.forMonth(ym)
+        let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
+        let spentByCat = transactions.expenseByCategory(start: start, end: end)
+
+        let overall = all.first { $0.categoryId == nil }.map {
+            BudgetProgress(categoryId: nil, name: "全体", color: nil,
+                           budget: $0.amount, spent: summary.expense)
+        }
+
+        let categoryProgress: [BudgetProgress] = all
+            .filter { $0.categoryId != nil }
+            .compactMap { b in
+                guard let cid = b.categoryId, let cat = categoriesById[cid] else { return nil }
+                return BudgetProgress(categoryId: cid, name: cat.name, color: cat.color,
+                                      budget: b.amount, spent: spentByCat[cid] ?? 0)
+            }
+            .sorted { $0.ratio > $1.ratio }
+
+        return (overall, categoryProgress)
+    }
+
+    func budgetAmount(categoryId: Int64?) -> Int {
+        budgets.forMonth(currentYearMonth)
+            .first { $0.categoryId == categoryId }?.amount ?? 0
+    }
+
+    func setBudget(categoryId: Int64?, amount: Int) {
+        budgets.set(yearMonth: currentYearMonth, categoryId: categoryId, amount: amount)
+        objectWillChange.send()
+    }
+
+    // MARK: - 定期取引
+
+    func saveRecurring(_ rule: RecurringRule) {
+        if rule.id == nil { recurring.insert(rule) } else { recurring.update(rule) }
+        applyDueRecurring()
+        reload()
+    }
+
+    func deleteRecurring(_ rule: RecurringRule) {
+        guard let id = rule.id else { return }
+        recurring.delete(id: id)
+        reload()
+    }
+
+    /// next_date が今日以前のルールから取引を生成し、next_date を進める。
+    func applyDueRecurring() {
+        let today = Dates.today()
+        for rule in recurring.all() {
+            guard let id = rule.id else { continue }
+            var next = rule.nextDate
+            var generated = false
+            while next <= today {
+                if let end = rule.endDate, next > end { break }
+                transactions.insert(TxRecord(
+                    type: rule.type, amount: rule.amount, date: next,
+                    categoryId: rule.categoryId, accountId: rule.accountId,
+                    toAccountId: rule.toAccountId, memo: rule.memo))
+                next = Dates.advance(next, frequency: rule.frequency, interval: rule.interval)
+                generated = true
+            }
+            if generated { recurring.updateNextDate(id: id, next) }
+        }
+    }
+
+    // MARK: - データ入出力
+
+    /// 全取引を CSV 文字列にする。
+    func exportCSV() -> String {
+        var lines = ["日付,種別,金額,カテゴリ,口座,振替先,メモ"]
+        let accountName = Dictionary(uniqueKeysWithValues: accountList.compactMap { a in
+            a.id.map { ($0, a.name) }
+        })
+        let rows = transactions.range().sorted { $0.date < $1.date }
+        for t in rows {
+            let cat = t.categoryId.flatMap { categoriesById[$0]?.name } ?? ""
+            let acc = accountName[t.accountId] ?? ""
+            let toAcc = t.toAccountId.flatMap { accountName[$0] } ?? ""
+            let cols = [t.date, t.type.label, String(t.amount), cat, acc, toAcc, t.memo ?? ""]
+            lines.append(cols.map(Self.csvEscape).joined(separator: ","))
+        }
+        return lines.joined(separator: "\n")
+    }
+
+    /// CSV を一時ファイルに書き出して URL を返す（共有用）。
+    func makeCSVFile() -> URL? {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("kakeibo_\(Dates.today()).csv")
+        do {
+            try exportCSV().data(using: .utf8)?.write(to: url)
+            return url
+        } catch {
+            return nil
+        }
+    }
+
+    /// バックアップ用に DB ファイルの URL を返す。
+    var backupFileURL: URL { URL(fileURLWithPath: dbPath) }
+
+    /// 選択した DB ファイルで現在の DB を置き換える。
+    @discardableResult
+    func restore(from url: URL) -> Bool {
+        let needsScope = url.startAccessingSecurityScopedResource()
+        defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
+
+        db.closeConnection()
+        let fm = FileManager.default
+        do {
+            if fm.fileExists(atPath: dbPath) { try fm.removeItem(atPath: dbPath) }
+            try fm.copyItem(at: url, to: URL(fileURLWithPath: dbPath))
+            db = try Database(path: dbPath)
+            loadSettings()
+            reload()
+            return true
+        } catch {
+            // 失敗時は元の場所で開き直す
+            db = (try? Database(path: dbPath)) ?? db
+            return false
+        }
+    }
+
+    private static func csvEscape(_ field: String) -> String {
+        if field.contains(",") || field.contains("\"") || field.contains("\n") {
+            return "\"" + field.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        }
+        return field
     }
 
     /// 取引の日付ごとグルーピング（date DESC を保ったまま）。

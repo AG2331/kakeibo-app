@@ -17,7 +17,18 @@ enum Dates {
         return f
     }()
 
+    private static let ymFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM"
+        f.timeZone = .current
+        return f
+    }()
+
     static func ymd(_ date: Date) -> String { ymdFormatter.string(from: date) }
+
+    /// 「YYYY-MM」（予算の year_month キー用）。
+    static func ym(_ date: Date) -> String { ymFormatter.string(from: date) }
 
     static func parse(_ s: String) -> Date { ymdFormatter.date(from: s) ?? Date() }
 
@@ -70,5 +81,20 @@ enum Dates {
     /// 「6月」のような短い月ラベル。
     static func shortMonthLabel(_ date: Date) -> String {
         "\(Calendar.current.component(.month, from: date))月"
+    }
+
+    static func today() -> String { ymd(Date()) }
+
+    /// 頻度×間隔だけ日付を進めた YYYY-MM-DD を返す（定期取引用）。
+    static func advance(_ ymdStr: String, frequency: Frequency, interval: Int) -> String {
+        let cal = Calendar.current
+        let component: Calendar.Component = switch frequency {
+        case .daily: .day
+        case .weekly: .weekOfYear
+        case .monthly: .month
+        case .yearly: .year
+        }
+        let next = cal.date(byAdding: component, value: interval, to: parse(ymdStr)) ?? parse(ymdStr)
+        return ymd(next)
     }
 }
