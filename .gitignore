@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Flutter/Dart（flutter create 後に追記される想定）
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+
+# iOS / Android のローカル設定
+ios/Flutter/flutter_export_environment.sh
+**/Pods/
+local.properties
