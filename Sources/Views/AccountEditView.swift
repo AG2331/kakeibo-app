@@ -48,8 +48,7 @@ struct AccountEditView: View {
                 Section("初期残高") {
                     HStack {
                         Text(Money.currency.symbol).foregroundStyle(.secondary)
-                        TextField("0", text: $initialBalanceText)
-                            .keyboardType(.numbersAndPunctuation)
+                        AmountField(placeholder: "0", text: $initialBalanceText)
                     }
                 }
             }

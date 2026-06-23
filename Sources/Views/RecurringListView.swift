@@ -104,7 +104,7 @@ struct RecurringEditView: View {
 
                     HStack {
                         Text(Money.currency.symbol).foregroundStyle(.secondary)
-                        TextField("金額", text: $amountText).keyboardType(.numberPad)
+                        AmountField(placeholder: "金額", text: $amountText)
                     }
                 }
 

@@ -48,9 +48,8 @@ struct TransactionEditView: View {
 
                 Section {
                     HStack {
-                        Text("¥").foregroundStyle(.secondary)
-                        TextField("金額", text: $amountText)
-                            .keyboardType(.numberPad)
+                        Text(Money.currency.symbol).foregroundStyle(.secondary)
+                        AmountField(placeholder: "金額", text: $amountText)
                             .font(.title2.bold())
                     }
                     DatePicker("日付", selection: $date, displayedComponents: .date)
