@@ -1,0 +1,424 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07E3A1A6B5ED4FBB34B3E957 /* AccountRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FE9DB1DD1C23ED13C095AE5 /* AccountRepository.swift */; };
+		10D86990AEE209DF728CA84E /* TransactionEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C469DCCE3C71A3F3DA85731 /* TransactionEditView.swift */; };
+		116C0E21B0D870F1945A5FD1 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0388790C61F6B8F057F078B7 /* Database.swift */; };
+		13C68DAD76E99FDD4D9112B8 /* Money.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB10C847597C144B45D2354 /* Money.swift */; };
+		18BA436411CCC3E51B59846F /* KakeiboApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 683F506ACDA21C676A510947 /* KakeiboApp.swift */; };
+		26A4C3B6E8E76D493A3A4B0D /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FADBF9296CD30E41F87C35 /* Color+Hex.swift */; };
+		42134E14E19DF2C5A93A01F4 /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA0F5BD69C7A941F96B6D33 /* Account.swift */; };
+		555A0A35FC47F6C91A48F0A0 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F4F0E3CF69B9E7E0DA04A5D /* HomeView.swift */; };
+		594B552172B71DBEF93319D4 /* CategoryRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59EE64F8006FB3FFFD50A945 /* CategoryRepository.swift */; };
+		692B5DCF81FC56CAB3766936 /* TxRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932615C89BC1749DAC95455C /* TxRecord.swift */; };
+		6D6B1CA3390AAC16945B56FC /* Dates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB720DC44AC8A1286DC6777 /* Dates.swift */; };
+		8FB7EB82138354E1177B87DC /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */; };
+		B8539F2E7021A81B4FC83006 /* TransactionRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B90A7979D337D61C11C846 /* TransactionRepository.swift */; };
+		B8EAC4FE7C2C618A9CC35E85 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = B74E1E7F3B3AAA64353AB56B /* Category.swift */; };
+		C05285DAEF6887F6477AEFAA /* Migrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 271FD4BC971F1681A24FB747 /* Migrations.swift */; };
+		F2D266F2E8D1E8167C5F19EF /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE141DB9C1601ECF7C8BB40B /* AppStore.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0388790C61F6B8F057F078B7 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
+		1BB720DC44AC8A1286DC6777 /* Dates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dates.swift; sourceTree = "<group>"; };
+		271FD4BC971F1681A24FB747 /* Migrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Migrations.swift; sourceTree = "<group>"; };
+		44FADBF9296CD30E41F87C35 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		59EE64F8006FB3FFFD50A945 /* CategoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryRepository.swift; sourceTree = "<group>"; };
+		683F506ACDA21C676A510947 /* KakeiboApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KakeiboApp.swift; sourceTree = "<group>"; };
+		77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		86A6B732154E0010F5448616 /* Kakeibo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Kakeibo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8C469DCCE3C71A3F3DA85731 /* TransactionEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionEditView.swift; sourceTree = "<group>"; };
+		8CA0F5BD69C7A941F96B6D33 /* Account.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Account.swift; sourceTree = "<group>"; };
+		8F4F0E3CF69B9E7E0DA04A5D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		8FE9DB1DD1C23ED13C095AE5 /* AccountRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountRepository.swift; sourceTree = "<group>"; };
+		932615C89BC1749DAC95455C /* TxRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TxRecord.swift; sourceTree = "<group>"; };
+		AE141DB9C1601ECF7C8BB40B /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		B1B90A7979D337D61C11C846 /* TransactionRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionRepository.swift; sourceTree = "<group>"; };
+		B74E1E7F3B3AAA64353AB56B /* Category.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		BEB10C847597C144B45D2354 /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		79B73EAA73503A6F68EBDB52 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FB7EB82138354E1177B87DC /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1A9F3196FF77F7A466440CCF /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				683F506ACDA21C676A510947 /* KakeiboApp.swift */,
+				2F2789BBEF8191330BECF10F /* Database */,
+				69356627B9E89C7A712623DB /* Models */,
+				C526E1C43E768755583DED0A /* Repositories */,
+				698DF6E58BB484AB33C07CA5 /* Stores */,
+				AD7E9FAEECCC4DBD1372DA65 /* Util */,
+				7DDAC0DF0949E3B207FF4F8C /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		2F2789BBEF8191330BECF10F /* Database */ = {
+			isa = PBXGroup;
+			children = (
+				0388790C61F6B8F057F078B7 /* Database.swift */,
+				271FD4BC971F1681A24FB747 /* Migrations.swift */,
+			);
+			path = Database;
+			sourceTree = "<group>";
+		};
+		3E0A7734C80A368F09AD1C05 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				86A6B732154E0010F5448616 /* Kakeibo.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		69356627B9E89C7A712623DB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				8CA0F5BD69C7A941F96B6D33 /* Account.swift */,
+				B74E1E7F3B3AAA64353AB56B /* Category.swift */,
+				932615C89BC1749DAC95455C /* TxRecord.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		698DF6E58BB484AB33C07CA5 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				AE141DB9C1601ECF7C8BB40B /* AppStore.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		742DC13D50871AF62ADE99E6 = {
+			isa = PBXGroup;
+			children = (
+				1A9F3196FF77F7A466440CCF /* Sources */,
+				E8207664690E3A0E2B9F6A84 /* Frameworks */,
+				3E0A7734C80A368F09AD1C05 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7DDAC0DF0949E3B207FF4F8C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				8F4F0E3CF69B9E7E0DA04A5D /* HomeView.swift */,
+				8C469DCCE3C71A3F3DA85731 /* TransactionEditView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AD7E9FAEECCC4DBD1372DA65 /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				44FADBF9296CD30E41F87C35 /* Color+Hex.swift */,
+				1BB720DC44AC8A1286DC6777 /* Dates.swift */,
+				BEB10C847597C144B45D2354 /* Money.swift */,
+			);
+			path = Util;
+			sourceTree = "<group>";
+		};
+		C526E1C43E768755583DED0A /* Repositories */ = {
+			isa = PBXGroup;
+			children = (
+				8FE9DB1DD1C23ED13C095AE5 /* AccountRepository.swift */,
+				59EE64F8006FB3FFFD50A945 /* CategoryRepository.swift */,
+				B1B90A7979D337D61C11C846 /* TransactionRepository.swift */,
+			);
+			path = Repositories;
+			sourceTree = "<group>";
+		};
+		E8207664690E3A0E2B9F6A84 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		36BCB32C97528B25015F4828 /* Kakeibo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A921CEF8074BBE182DEDB920 /* Build configuration list for PBXNativeTarget "Kakeibo" */;
+			buildPhases = (
+				9E695BF22BB685746454ECA4 /* Sources */,
+				79B73EAA73503A6F68EBDB52 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Kakeibo;
+			packageProductDependencies = (
+			);
+			productName = Kakeibo;
+			productReference = 86A6B732154E0010F5448616 /* Kakeibo.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		80FD6BF88735F04D6654C209 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					36BCB32C97528B25015F4828 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 45ED9E9F3F9823FFE6804DDE /* Build configuration list for PBXProject "Kakeibo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 742DC13D50871AF62ADE99E6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3E0A7734C80A368F09AD1C05 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				36BCB32C97528B25015F4828 /* Kakeibo */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		9E695BF22BB685746454ECA4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				42134E14E19DF2C5A93A01F4 /* Account.swift in Sources */,
+				07E3A1A6B5ED4FBB34B3E957 /* AccountRepository.swift in Sources */,
+				F2D266F2E8D1E8167C5F19EF /* AppStore.swift in Sources */,
+				B8EAC4FE7C2C618A9CC35E85 /* Category.swift in Sources */,
+				594B552172B71DBEF93319D4 /* CategoryRepository.swift in Sources */,
+				26A4C3B6E8E76D493A3A4B0D /* Color+Hex.swift in Sources */,
+				116C0E21B0D870F1945A5FD1 /* Database.swift in Sources */,
+				6D6B1CA3390AAC16945B56FC /* Dates.swift in Sources */,
+				555A0A35FC47F6C91A48F0A0 /* HomeView.swift in Sources */,
+				18BA436411CCC3E51B59846F /* KakeiboApp.swift in Sources */,
+				C05285DAEF6887F6477AEFAA /* Migrations.swift in Sources */,
+				13C68DAD76E99FDD4D9112B8 /* Money.swift in Sources */,
+				10D86990AEE209DF728CA84E /* TransactionEditView.swift in Sources */,
+				B8539F2E7021A81B4FC83006 /* TransactionRepository.swift in Sources */,
+				692B5DCF81FC56CAB3766936 /* TxRecord.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		25BE5B01C3C58F0ED1E6A577 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_CFBundleDisplayName = "家計簿";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.kakeibo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		43E1EB224FCE073C2F713281 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_CFBundleDisplayName = "家計簿";
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.kakeibo;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		C1F09D322FC949C5DB90037A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		F45898AB412CBF89068772B5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		45ED9E9F3F9823FFE6804DDE /* Build configuration list for PBXProject "Kakeibo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F45898AB412CBF89068772B5 /* Debug */,
+				C1F09D322FC949C5DB90037A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A921CEF8074BBE182DEDB920 /* Build configuration list for PBXNativeTarget "Kakeibo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				43E1EB224FCE073C2F713281 /* Debug */,
+				25BE5B01C3C58F0ED1E6A577 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 80FD6BF88735F04D6654C209 /* Project object */;
+}
