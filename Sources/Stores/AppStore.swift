@@ -156,6 +156,36 @@ final class AppStore: ObservableObject {
         reload()
     }
 
+    // MARK: - 集計・レポート
+
+    /// 選択中の期間のカテゴリ別支出（多い順）。
+    func expenseBreakdown() -> [CategorySlice] {
+        let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
+        let map = transactions.expenseByCategory(start: start, end: end)
+        return map.compactMap { cid, amount in
+            categoriesById[cid].map { CategorySlice(category: $0, amount: amount) }
+        }
+        .sorted { $0.amount > $1.amount }
+    }
+
+    /// 直近 months か月分の月別収支（古い→新しい順）。
+    func monthlyTrend(months: Int = 6) -> [MonthBar] {
+        (0..<months).reversed().map { offset in
+            let anchor = Dates.shiftMonth(selectedMonth, by: -offset)
+            let (start, end) = Dates.monthRange(anchor, startDay: settings.monthStartDay)
+            let s = transactions.summary(start: start, end: end)
+            return MonthBar(month: anchor, label: Dates.shortMonthLabel(anchor),
+                            income: s.income, expense: s.expense)
+        }
+    }
+
+    /// 前期間（1つ前の月）のサマリ。前月比の算出に使う。
+    func previousSummary() -> MonthlySummary {
+        let anchor = Dates.shiftMonth(selectedMonth, by: -1)
+        let (start, end) = Dates.monthRange(anchor, startDay: settings.monthStartDay)
+        return transactions.summary(start: start, end: end)
+    }
+
     /// 取引の日付ごとグルーピング（date DESC を保ったまま）。
     var groupedByDate: [(date: String, items: [TxRecord])] {
         var order: [String] = []

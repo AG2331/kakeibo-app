@@ -66,4 +66,9 @@ enum Dates {
         let c = cal.dateComponents([.year, .month], from: date)
         return "\(c.year ?? 0)年\(c.month ?? 0)月"
     }
+
+    /// 「6月」のような短い月ラベル。
+    static func shortMonthLabel(_ date: Date) -> String {
+        "\(Calendar.current.component(.month, from: date))月"
+    }
 }

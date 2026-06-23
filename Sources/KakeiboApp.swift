@@ -6,7 +6,7 @@ struct KakeiboApp: App {
 
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            RootView()
                 .environmentObject(store)
                 .tint(TxPalette.accent)
                 .preferredColorScheme(store.settings.theme.colorScheme)
