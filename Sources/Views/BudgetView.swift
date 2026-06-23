@@ -146,8 +146,7 @@ struct BudgetEditView: View {
                 Section("\(target.name)の月予算") {
                     HStack {
                         Text(Money.currency.symbol).foregroundStyle(.secondary)
-                        TextField("0", text: $amountText)
-                            .keyboardType(.numberPad)
+                        AmountField(placeholder: "0", text: $amountText)
                             .font(.title3.bold())
                     }
                 }

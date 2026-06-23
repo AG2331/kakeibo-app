@@ -13,6 +13,7 @@
 		13C68DAD76E99FDD4D9112B8 /* Money.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB10C847597C144B45D2354 /* Money.swift */; };
 		18BA436411CCC3E51B59846F /* KakeiboApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 683F506ACDA21C676A510947 /* KakeiboApp.swift */; };
 		26A4C3B6E8E76D493A3A4B0D /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FADBF9296CD30E41F87C35 /* Color+Hex.swift */; };
+		2958EF3D937C04656C63162D /* AmountField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D218A87979AC974531B2EEA7 /* AmountField.swift */; };
 		2B4F7417CD5635681421454D /* BudgetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E87350C87699A2472E59A419 /* BudgetView.swift */; };
 		42134E14E19DF2C5A93A01F4 /* Account.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CA0F5BD69C7A941F96B6D33 /* Account.swift */; };
 		4C7D8910BD8F5505AEA99DC7 /* Budget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2C9E256E0C9582348F329D0 /* Budget.swift */; };
@@ -73,6 +74,7 @@
 		BEB10C847597C144B45D2354 /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
 		CA5B5CEECDDF90AC18476410 /* AccountPickerField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountPickerField.swift; sourceTree = "<group>"; };
 		CD8329E59FFC50C5E6BD94DF /* RecurringRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringRepository.swift; sourceTree = "<group>"; };
+		D218A87979AC974531B2EEA7 /* AmountField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AmountField.swift; sourceTree = "<group>"; };
 		DF41667BB95FC1E83985F4C9 /* AccountEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountEditView.swift; sourceTree = "<group>"; };
 		E2C9E256E0C9582348F329D0 /* Budget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Budget.swift; sourceTree = "<group>"; };
 		E87350C87699A2472E59A419 /* BudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
@@ -161,6 +163,7 @@
 				DF41667BB95FC1E83985F4C9 /* AccountEditView.swift */,
 				CA5B5CEECDDF90AC18476410 /* AccountPickerField.swift */,
 				41C04E813875E39313FBDB39 /* AccountsOverviewView.swift */,
+				D218A87979AC974531B2EEA7 /* AmountField.swift */,
 				E87350C87699A2472E59A419 /* BudgetView.swift */,
 				15B3EC58EBF66687D4C4C704 /* CalendarMonthView.swift */,
 				25F21A35CC3E76B7775310DB /* CategoryListView.swift */,
@@ -270,6 +273,7 @@
 				81BDC600C56E04F9AC3F5A3A /* AccountPickerField.swift in Sources */,
 				07E3A1A6B5ED4FBB34B3E957 /* AccountRepository.swift in Sources */,
 				86BE3CEBB2BD5D0BAF3A2574 /* AccountsOverviewView.swift in Sources */,
+				2958EF3D937C04656C63162D /* AmountField.swift in Sources */,
 				6CF8590F59DEE35F34B863A5 /* AppSettings.swift in Sources */,
 				F2D266F2E8D1E8167C5F19EF /* AppStore.swift in Sources */,
 				4C7D8910BD8F5505AEA99DC7 /* Budget.swift in Sources */,

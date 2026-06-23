@@ -88,8 +88,8 @@ struct RecurringEditView: View {
         _endDate = State(initialValue: existing?.endDate.map(Dates.parse) ?? Date())
     }
 
-    private var categoryOptions: [Category] {
-        store.categories(of: type)
+    private var categoryOptions: [(category: Category, depth: Int)] {
+        store.orderedCategories(of: type)
     }
 
     var body: some View {
@@ -104,7 +104,7 @@ struct RecurringEditView: View {
 
                     HStack {
                         Text(Money.currency.symbol).foregroundStyle(.secondary)
-                        TextField("金額", text: $amountText).keyboardType(.numberPad)
+                        AmountField(placeholder: "金額", text: $amountText)
                     }
                 }
 
@@ -131,7 +131,10 @@ struct RecurringEditView: View {
                     Section {
                         Picker("カテゴリ", selection: $categoryId) {
                             Text("選択してください").tag(Int64?.none)
-                            ForEach(categoryOptions) { Text($0.name).tag(Int64?.some($0.id ?? 0)) }
+                            ForEach(categoryOptions, id: \.category.id) { entry in
+                                Text(entry.depth == 0 ? entry.category.name : "　└ \(entry.category.name)")
+                                    .tag(Int64?.some(entry.category.id ?? 0))
+                            }
                         }
                         AccountPickerField(title: "口座", selection: $accountId)
                     }

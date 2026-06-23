@@ -30,10 +30,9 @@ struct TransactionEditView: View {
 
     private var isEdit: Bool { existing != nil }
 
-    private var categoryOptions: [Category] {
-        store.categoriesById.values
-            .filter { $0.type == type }
-            .sorted { $0.sortOrder < $1.sortOrder }
+    /// 親→サブの順に並べたカテゴリ（サブはインデント表示）。
+    private var categoryOptions: [(category: Category, depth: Int)] {
+        store.orderedCategories(of: type)
     }
 
     var body: some View {
@@ -49,9 +48,8 @@ struct TransactionEditView: View {
 
                 Section {
                     HStack {
-                        Text("¥").foregroundStyle(.secondary)
-                        TextField("金額", text: $amountText)
-                            .keyboardType(.numberPad)
+                        Text(Money.currency.symbol).foregroundStyle(.secondary)
+                        AmountField(placeholder: "金額", text: $amountText)
                             .font(.title2.bold())
                     }
                     DatePicker("日付", selection: $date, displayedComponents: .date)
@@ -67,8 +65,9 @@ struct TransactionEditView: View {
                     Section {
                         Picker("カテゴリ", selection: $categoryId) {
                             Text("選択してください").tag(Int64?.none)
-                            ForEach(categoryOptions) { c in
-                                Text(c.name).tag(Int64?.some(c.id ?? 0))
+                            ForEach(categoryOptions, id: \.category.id) { entry in
+                                Text(entry.depth == 0 ? entry.category.name : "　└ \(entry.category.name)")
+                                    .tag(Int64?.some(entry.category.id ?? 0))
                             }
                         }
                         AccountPickerField(title: "口座", selection: $accountId)

@@ -6,19 +6,22 @@ struct CategoryListView: View {
     @State private var editing: Category?
     @State private var creatingType: TxType?
     @State private var deleteError = false
+    @State private var collapsed: Set<Int64> = []
 
     var body: some View {
         List {
             ForEach([TxType.expense, TxType.income], id: \.self) { type in
                 Section(type.label) {
-                    ForEach(store.categories(of: type)) { category in
-                        Button { editing = category } label: {
-                            row(category)
+                    ForEach(store.categories(of: type).filter { $0.parentId == nil }) { parent in
+                        parentRow(parent, type: type)
+
+                        if !isCollapsed(parent.id) {
+                            ForEach(store.categories(of: type).filter { $0.parentId == parent.id }) { child in
+                                Button { editing = child } label: { row(child, depth: 1) }
+                                    .buttonStyle(.plain)
+                                    .swipeActions(edge: .trailing) { deleteButton(child) }
+                            }
                         }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete { offsets in
-                        delete(offsets, type: type)
                     }
 
                     Button {
@@ -40,30 +43,64 @@ struct CategoryListView: View {
         .alert("削除できません", isPresented: $deleteError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("このカテゴリを使っている取引があります。先に取引のカテゴリを変更してください。")
+            Text("このカテゴリは取引で使われているか、サブカテゴリを持っています。先にそれらを変更・削除してください。")
         }
     }
 
-    private func row(_ category: Category) -> some View {
+    /// 親カテゴリの行。子があれば折りたたみ用のシェブロンを左に表示する。
+    private func parentRow(_ category: Category, type: TxType) -> some View {
+        let hasChildren = !store.categories(of: type).filter { $0.parentId == category.id }.isEmpty
+        return HStack(spacing: 8) {
+            if hasChildren {
+                Button { toggle(category.id) } label: {
+                    Image(systemName: isCollapsed(category.id) ? "chevron.right" : "chevron.down")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .frame(width: 22, height: 22)
+                }
+                .buttonStyle(.borderless)
+            } else {
+                Spacer().frame(width: 22)
+            }
+            Button { editing = category } label: { row(category, depth: 0) }
+                .buttonStyle(.plain)
+        }
+        .swipeActions(edge: .trailing) { deleteButton(category) }
+    }
+
+    private func row(_ category: Category, depth: Int) -> some View {
         HStack(spacing: 12) {
+            if depth > 0 {
+                Image(systemName: "arrow.turn.down.right")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
             Circle()
                 .fill(category.color.map { Color(argb: $0) } ?? .gray)
-                .frame(width: 20, height: 20)
+                .frame(width: depth > 0 ? 16 : 20, height: depth > 0 ? 16 : 20)
             Text(category.name)
+                .font(depth > 0 ? .callout : .body)
             Spacer()
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
+        .padding(.leading, depth > 0 ? 12 : 0)
     }
 
-    private func delete(_ offsets: IndexSet, type: TxType) {
-        let list = store.categories(of: type)
-        for index in offsets {
-            if !store.deleteCategory(list[index]) {
-                deleteError = true
-            }
+    private func deleteButton(_ category: Category) -> some View {
+        Button(role: .destructive) {
+            if !store.deleteCategory(category) { deleteError = true }
+        } label: {
+            Label("削除", systemImage: "trash")
         }
+    }
+
+    private func isCollapsed(_ id: Int64?) -> Bool {
+        id.map { collapsed.contains($0) } ?? false
+    }
+
+    private func toggle(_ id: Int64?) {
+        guard let id else { return }
+        if collapsed.contains(id) { collapsed.remove(id) } else { collapsed.insert(id) }
     }
 }
 
@@ -77,6 +114,7 @@ struct CategoryEditView: View {
 
     @State private var name: String
     @State private var color: Int
+    @State private var parentId: Int64?
 
     /// 選択肢の色パレット（ARGB）。
     private let palette: [Int] = [
@@ -90,6 +128,13 @@ struct CategoryEditView: View {
         self.type = type
         _name = State(initialValue: existing?.name ?? "")
         _color = State(initialValue: existing?.color ?? 0xFF90A4AE)
+        _parentId = State(initialValue: existing?.parentId)
+    }
+
+    /// 親候補（同種別の親カテゴリのみ。自分自身は除く）。サブカテゴリを持つ親は従属不可。
+    private var parentOptions: [Category] {
+        let hasChildren = existing?.id.map { store.categories.childCount(id: $0) > 0 } ?? false
+        return hasChildren ? [] : store.parentCategoryCandidates(type: type, excluding: existing?.id)
     }
 
     var body: some View {
@@ -97,6 +142,16 @@ struct CategoryEditView: View {
             Form {
                 Section {
                     TextField("カテゴリ名", text: $name)
+                }
+                if !parentOptions.isEmpty {
+                    Section {
+                        Picker("所属（サブカテゴリにする）", selection: $parentId) {
+                            Text("親カテゴリ（独立）").tag(Int64?.none)
+                            ForEach(parentOptions) { Text("\($0.name) の中").tag(Int64?.some($0.id ?? 0)) }
+                        }
+                    } footer: {
+                        Text("親カテゴリを選ぶと、その配下のサブカテゴリ（例: 食費 > 外食）になります。")
+                    }
                 }
                 Section("色") {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 12) {
@@ -138,7 +193,7 @@ struct CategoryEditView: View {
             id: existing?.id,
             name: trimmed,
             type: type,
-            parentId: existing?.parentId,
+            parentId: parentId,
             icon: existing?.icon,
             color: color,
             sortOrder: existing?.sortOrder ?? 0
