@@ -96,6 +96,24 @@ final class AppStore: ObservableObject {
         allCategories.filter { $0.type == type }.sorted { $0.sortOrder < $1.sortOrder }
     }
 
+    /// 親カテゴリ→その配下のサブカテゴリの順に並べる（depth: 0=親, 1=サブ）。
+    func orderedCategories(of type: TxType) -> [(category: Category, depth: Int)] {
+        let all = categories(of: type)
+        var result: [(Category, Int)] = []
+        for parent in all where parent.parentId == nil {
+            result.append((parent, 0))
+            for child in all where child.parentId == parent.id {
+                result.append((child, 1))
+            }
+        }
+        return result
+    }
+
+    /// サブカテゴリの親候補（同じ種別の親カテゴリのみ。自分自身は除く）。
+    func parentCategoryCandidates(type: TxType, excluding selfId: Int64?) -> [Category] {
+        categories(of: type).filter { $0.parentId == nil && $0.id != selfId }
+    }
+
     func saveCategory(_ category: Category) {
         if category.id == nil {
             var c = category
@@ -111,6 +129,7 @@ final class AppStore: ObservableObject {
     func deleteCategory(_ category: Category) -> Bool {
         guard let id = category.id else { return false }
         if transactions.countByCategory(id: id) > 0 { return false }
+        if categories.childCount(id: id) > 0 { return false } // サブカテゴリを持つ親は削除不可
         categories.delete(id: id)
         reload()
         return true

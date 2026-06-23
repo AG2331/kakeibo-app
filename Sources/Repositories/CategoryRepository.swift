@@ -35,6 +35,12 @@ struct CategoryRepository {
         db.run("DELETE FROM categories WHERE id=?", [.int(id)])
     }
 
+    /// 指定カテゴリの子（サブカテゴリ）数。
+    func childCount(id: Int64) -> Int {
+        db.query("SELECT COUNT(*) AS c FROM categories WHERE parent_id=?", [.int(id)])
+            .first?.int("c") ?? 0
+    }
+
     static func map(_ r: Row) -> Category {
         Category(
             id: r.int64("id"),
