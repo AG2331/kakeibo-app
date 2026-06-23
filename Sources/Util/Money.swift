@@ -1,18 +1,29 @@
 import Foundation
 
-/// 金額は最小通貨単位の整数（円なら1円単位）で保持する。
+/// 金額は整数で保持する。表示通貨は設定に応じて切り替える。
 enum Money {
-    private static let formatter: NumberFormatter = {
+    /// 現在の表示通貨。AppStore が設定読込時にセットする。
+    static var currency: Currency = .jpy {
+        didSet { cache.removeAll() }
+    }
+
+    private static var cache: [Currency: NumberFormatter] = [:]
+
+    private static func formatter(for c: Currency) -> NumberFormatter {
+        if let f = cache[c] { return f }
         let f = NumberFormatter()
         f.numberStyle = .currency
-        f.locale = Locale(identifier: "ja_JP")
-        f.maximumFractionDigits = 0
+        f.locale = Locale(identifier: c.localeId)
+        f.currencySymbol = c.symbol
+        f.maximumFractionDigits = 0   // 整数（主要単位）として扱う
+        cache[c] = f
         return f
-    }()
+    }
 
-    /// 整数金額を「¥1,234」形式に整形する。
+    /// 整数金額を現在通貨で「¥1,234」形式に整形する。
     static func format(_ amount: Int) -> String {
-        formatter.string(from: NSNumber(value: amount)) ?? "¥\(amount)"
+        formatter(for: currency).string(from: NSNumber(value: amount))
+            ?? "\(currency.symbol)\(amount)"
     }
 
     /// 「1,234」「¥1234」等の入力文字列を整数に変換する。失敗時は nil。

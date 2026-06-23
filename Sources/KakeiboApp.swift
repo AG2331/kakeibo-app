@@ -9,6 +9,7 @@ struct KakeiboApp: App {
             HomeView()
                 .environmentObject(store)
                 .tint(TxPalette.accent)
+                .preferredColorScheme(store.settings.theme.colorScheme)
         }
     }
 }

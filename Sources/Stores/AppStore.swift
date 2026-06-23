@@ -8,20 +8,26 @@ final class AppStore: ObservableObject {
     let transactions: TransactionRepository
     let categories: CategoryRepository
     let accounts: AccountRepository
+    let settingsRepo: SettingsRepository
 
     @Published var selectedMonth: Date
     @Published var monthTransactions: [TxRecord] = []
     @Published var summary: MonthlySummary = .empty
     @Published var categoriesById: [Int64: Category] = [:]
+    @Published var allCategories: [Category] = []
     @Published var accountList: [Account] = []
+    @Published var accountBalances: [Int64: Int] = [:]
+    @Published var settings: AppSettings = .default
 
     init(db: Database) {
         self.db = db
         self.transactions = TransactionRepository(db: db)
         self.categories = CategoryRepository(db: db)
         self.accounts = AccountRepository(db: db)
+        self.settingsRepo = SettingsRepository(db: db)
         let now = Date()
         self.selectedMonth = Dates.shiftMonth(now, by: 0)
+        loadSettings()
         reload()
     }
 
@@ -38,15 +44,24 @@ final class AppStore: ObservableObject {
 
     // MARK: - 読み込み
 
+    func loadSettings() {
+        settings = settingsRepo.load()
+        Money.currency = settings.currency
+    }
+
     func reload() {
-        let (start, end) = Dates.monthRange(selectedMonth)
+        let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
         summary = transactions.summary(start: start, end: end)
         monthTransactions = transactions.range(start: start, end: end)
         let cats = categories.all()
+        allCategories = cats
         categoriesById = Dictionary(uniqueKeysWithValues: cats.compactMap { c in
             c.id.map { ($0, c) }
         })
         accountList = accounts.all()
+        accountBalances = Dictionary(uniqueKeysWithValues: accountList.compactMap { a in
+            a.id.map { ($0, accounts.balance(id: $0)) }
+        })
     }
 
     func shiftMonth(by delta: Int) {
@@ -54,7 +69,7 @@ final class AppStore: ObservableObject {
         reload()
     }
 
-    // MARK: - 取引の更新
+    // MARK: - 取引
 
     func save(_ record: TxRecord) {
         if record.id == nil {
@@ -68,6 +83,76 @@ final class AppStore: ObservableObject {
     func delete(_ record: TxRecord) {
         guard let id = record.id else { return }
         transactions.delete(id: id)
+        reload()
+    }
+
+    // MARK: - カテゴリ管理
+
+    func categories(of type: TxType) -> [Category] {
+        allCategories.filter { $0.type == type }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    func saveCategory(_ category: Category) {
+        if category.id == nil {
+            var c = category
+            c.sortOrder = (categories(of: category.type).map(\.sortOrder).max() ?? -1) + 1
+            categories.insert(c)
+        } else {
+            categories.update(category)
+        }
+        reload()
+    }
+
+    /// 使用中（取引から参照）なら false を返し、削除しない。
+    @discardableResult
+    func deleteCategory(_ category: Category) -> Bool {
+        guard let id = category.id else { return false }
+        if transactions.countByCategory(id: id) > 0 { return false }
+        categories.delete(id: id)
+        reload()
+        return true
+    }
+
+    // MARK: - 口座管理
+
+    func saveAccount(_ account: Account) {
+        if account.id == nil {
+            var a = account
+            a.sortOrder = (accountList.map(\.sortOrder).max() ?? -1) + 1
+            accounts.insert(a)
+        } else {
+            accounts.update(account)
+        }
+        reload()
+    }
+
+    @discardableResult
+    func deleteAccount(_ account: Account) -> Bool {
+        guard let id = account.id else { return false }
+        if transactions.countByAccount(id: id) > 0 { return false }
+        accounts.delete(id: id)
+        reload()
+        return true
+    }
+
+    // MARK: - 設定
+
+    func setCurrency(_ currency: Currency) {
+        settingsRepo.set("currency", currency.rawValue)
+        settings.currency = currency
+        Money.currency = currency
+        objectWillChange.send()
+    }
+
+    func setTheme(_ theme: ThemeMode) {
+        settingsRepo.set("theme", theme.rawValue)
+        settings.theme = theme
+    }
+
+    func setMonthStartDay(_ day: Int) {
+        let clamped = min(max(day, 1), 28)
+        settingsRepo.set("month_start_day", String(clamped))
+        settings.monthStartDay = clamped
         reload()
     }
 

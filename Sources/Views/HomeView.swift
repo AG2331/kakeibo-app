@@ -53,6 +53,13 @@ struct HomeView: View {
                         Image(systemName: "chevron.right")
                     }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        SettingsView()
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                }
             }
             .safeAreaInset(edge: .bottom) {
                 Button {

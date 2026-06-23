@@ -89,6 +89,20 @@ struct TransactionRepository {
         return result
     }
 
+    /// カテゴリを参照する取引数。削除可否の判定に使う。
+    func countByCategory(id: Int64) -> Int {
+        db.query("SELECT COUNT(*) AS c FROM transactions WHERE category_id = ?", [.int(id)])
+            .first?.int("c") ?? 0
+    }
+
+    /// 口座を参照する取引数（出金元/振替先の両方）。
+    func countByAccount(id: Int64) -> Int {
+        db.query(
+            "SELECT COUNT(*) AS c FROM transactions WHERE account_id = ? OR to_account_id = ?",
+            [.int(id), .int(id)]
+        ).first?.int("c") ?? 0
+    }
+
     static func map(_ r: Row) -> TxRecord {
         TxRecord(
             id: r.int64("id"),
