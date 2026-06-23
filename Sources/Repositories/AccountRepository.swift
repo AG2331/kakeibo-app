@@ -13,21 +13,27 @@ struct AccountRepository {
     @discardableResult
     func insert(_ a: Account) -> Int64 {
         db.run(
-            "INSERT INTO accounts(name, type, initial_balance, sort_order, archived) VALUES(?,?,?,?,?)",
+            "INSERT INTO accounts(name, type, initial_balance, sort_order, archived, parent_id) VALUES(?,?,?,?,?,?)",
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
-             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0)])
+             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId)])
     }
 
     func update(_ a: Account) {
         guard let id = a.id else { return }
         db.run(
-            "UPDATE accounts SET name=?, type=?, initial_balance=?, sort_order=?, archived=? WHERE id=?",
+            "UPDATE accounts SET name=?, type=?, initial_balance=?, sort_order=?, archived=?, parent_id=? WHERE id=?",
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
-             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), .int(id)])
+             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId), .int(id)])
     }
 
     func delete(id: Int64) {
         db.run("DELETE FROM accounts WHERE id=?", [.int(id)])
+    }
+
+    /// 指定口座の子（仮想口座）数。
+    func childCount(id: Int64) -> Int {
+        db.query("SELECT COUNT(*) AS c FROM accounts WHERE parent_id=?", [.int(id)])
+            .first?.int("c") ?? 0
     }
 
     /// 現在残高 = 初期残高 + 入金/振替先 - 出金/振替元。
@@ -60,7 +66,8 @@ struct AccountRepository {
             type: AccountType(rawValue: r.string("type") ?? "cash") ?? .cash,
             initialBalance: r.int("initial_balance") ?? 0,
             sortOrder: r.int("sort_order") ?? 0,
-            archived: (r.int("archived") ?? 0) == 1
+            archived: (r.int("archived") ?? 0) == 1,
+            parentId: r.int64("parent_id")
         )
     }
 }

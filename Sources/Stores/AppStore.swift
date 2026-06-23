@@ -133,9 +133,42 @@ final class AppStore: ObservableObject {
     func deleteAccount(_ account: Account) -> Bool {
         guard let id = account.id else { return false }
         if transactions.countByAccount(id: id) > 0 { return false }
+        if accounts.childCount(id: id) > 0 { return false } // 仮想口座を持つ親は削除不可
         accounts.delete(id: id)
         reload()
         return true
+    }
+
+    /// 取引登録用に、親口座→その仮想口座の順で並べた口座リスト（depth: 0=親, 1=仮想）。
+    var orderedAccounts: [(account: Account, depth: Int)] {
+        var result: [(Account, Int)] = []
+        for top in accountList where top.parentId == nil {
+            result.append((top, 0))
+            for kid in accountList where kid.parentId == top.id {
+                result.append((kid, 1))
+            }
+        }
+        return result
+    }
+
+    /// 親口座になれる候補（独立口座のみ。自分自身は除く）。
+    func parentCandidates(excluding selfId: Int64?) -> [Account] {
+        accountList.filter { $0.parentId == nil && $0.id != selfId }
+    }
+
+    /// 総額タブ用: 口座の階層別残高と総資産。
+    func accountOverview() -> (grandTotal: Int, nodes: [AccountNode]) {
+        let nodes: [AccountNode] = accountList
+            .filter { $0.parentId == nil }
+            .map { top in
+                let own = top.id.flatMap { accountBalances[$0] } ?? 0
+                let kids = accountList
+                    .filter { $0.parentId == top.id }
+                    .map { (account: $0, balance: $0.id.flatMap { accountBalances[$0] } ?? 0) }
+                return AccountNode(account: top, ownBalance: own, children: kids)
+            }
+        let grand = nodes.reduce(0) { $0 + $1.total }
+        return (grand, nodes)
     }
 
     // MARK: - 設定

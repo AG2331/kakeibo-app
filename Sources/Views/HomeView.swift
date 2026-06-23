@@ -5,6 +5,7 @@ struct HomeView: View {
     @EnvironmentObject private var store: AppStore
     @State private var editing: TxRecord?
     @State private var creating = false
+    @State private var editingBudget = false
 
     var body: some View {
         NavigationStack {
@@ -13,6 +14,14 @@ struct HomeView: View {
                     SummaryCard(summary: store.summary)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
+
+                    Button {
+                        editingBudget = true
+                    } label: {
+                        Label("予算の編集", systemImage: "chart.bar.doc.horizontal")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .listRowBackground(Color.clear)
                 }
 
                 if store.monthTransactions.isEmpty {
@@ -73,6 +82,9 @@ struct HomeView: View {
             }
             .sheet(item: $editing) { tx in
                 TransactionEditView(existing: tx)
+            }
+            .sheet(isPresented: $editingBudget) {
+                BudgetView()
             }
         }
     }
