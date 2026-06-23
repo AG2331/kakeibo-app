@@ -23,8 +23,9 @@ struct AccountsOverviewView: View {
                     .padding(.vertical, 4)
                 }
 
-                ForEach(overview.nodes) { node in
-                    Section {
+                // 支払い方法はひとつのセクションにまとめ、相互の間隔を詰める。
+                Section {
+                    ForEach(overview.nodes) { node in
                         Button { editing = node.account } label: { parentRow(node) }
                             .buttonStyle(.plain)
                             .swipeActions(edge: .trailing) { deleteButton(node.account) }
