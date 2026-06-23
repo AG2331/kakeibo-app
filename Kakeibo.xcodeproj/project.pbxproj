@@ -28,7 +28,6 @@
 		86BE3CEBB2BD5D0BAF3A2574 /* AccountsOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C04E813875E39313FBDB39 /* AccountsOverviewView.swift */; };
 		880C599FA97641D0BC65BEE0 /* BudgetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9089C16A7382A4736C8725D /* BudgetRepository.swift */; };
 		8FB7EB82138354E1177B87DC /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */; };
-		9D318E31F1C61BFD75850D07 /* AccountListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1A308A9596060BA9448E0A7 /* AccountListView.swift */; };
 		A2BD769BF0CD0F851AE7DDC4 /* SettingsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA4EF3DE36D4408B189F0A5 /* SettingsRepository.swift */; };
 		A3E64654F93D7381036A243F /* RecurringRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96235FA60502D1EA1549A0C /* RecurringRule.swift */; };
 		B0038011838174DBA30376FF /* RecurringListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A989A51E1A5CBF6C4894408F /* RecurringListView.swift */; };
@@ -38,6 +37,7 @@
 		CD01A3EA7F684A3296F863E3 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BEF443B5D1757DCD88A5885 /* SettingsView.swift */; };
 		E1BE029A9A105A0910420B4A /* Reports.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7265005079EB92D44D50702F /* Reports.swift */; };
 		E29B6A6E2B059BC0828BC9B1 /* ReportsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8354BE4D04B6EB49EAECB923 /* ReportsView.swift */; };
+		EFE8761C130B9101BA6138EF /* AccountEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF41667BB95FC1E83985F4C9 /* AccountEditView.swift */; };
 		F2D266F2E8D1E8167C5F19EF /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE141DB9C1601ECF7C8BB40B /* AppStore.swift */; };
 		F889AACE946C998AC3809040 /* CategoryListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F21A35CC3E76B7775310DB /* CategoryListView.swift */; };
 		FDB1C00DDA86014046243D70 /* DataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC675ADE7BAB5E86EC93304 /* DataView.swift */; };
@@ -73,7 +73,7 @@
 		BEB10C847597C144B45D2354 /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
 		CA5B5CEECDDF90AC18476410 /* AccountPickerField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountPickerField.swift; sourceTree = "<group>"; };
 		CD8329E59FFC50C5E6BD94DF /* RecurringRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringRepository.swift; sourceTree = "<group>"; };
-		D1A308A9596060BA9448E0A7 /* AccountListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountListView.swift; sourceTree = "<group>"; };
+		DF41667BB95FC1E83985F4C9 /* AccountEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountEditView.swift; sourceTree = "<group>"; };
 		E2C9E256E0C9582348F329D0 /* Budget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Budget.swift; sourceTree = "<group>"; };
 		E87350C87699A2472E59A419 /* BudgetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetView.swift; sourceTree = "<group>"; };
 		EA1AC47D355503FFE831DD79 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -158,7 +158,7 @@
 		7DDAC0DF0949E3B207FF4F8C /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				D1A308A9596060BA9448E0A7 /* AccountListView.swift */,
+				DF41667BB95FC1E83985F4C9 /* AccountEditView.swift */,
 				CA5B5CEECDDF90AC18476410 /* AccountPickerField.swift */,
 				41C04E813875E39313FBDB39 /* AccountsOverviewView.swift */,
 				E87350C87699A2472E59A419 /* BudgetView.swift */,
@@ -266,7 +266,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				42134E14E19DF2C5A93A01F4 /* Account.swift in Sources */,
-				9D318E31F1C61BFD75850D07 /* AccountListView.swift in Sources */,
+				EFE8761C130B9101BA6138EF /* AccountEditView.swift in Sources */,
 				81BDC600C56E04F9AC3F5A3A /* AccountPickerField.swift in Sources */,
 				07E3A1A6B5ED4FBB34B3E957 /* AccountRepository.swift in Sources */,
 				86BE3CEBB2BD5D0BAF3A2574 /* AccountsOverviewView.swift in Sources */,

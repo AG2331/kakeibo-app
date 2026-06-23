@@ -1,9 +1,12 @@
 import SwiftUI
 
-/// 口座・支払い方法の一覧と総額を表示するタブ。
+/// 口座・支払い方法のタブ。総額と内訳の表示に加え、登録・編集・削除もここで行う。
 /// 親口座（実口座）はその総額を、仮想口座（サブ口座）は内訳として表示する。
 struct AccountsOverviewView: View {
     @EnvironmentObject private var store: AppStore
+    @State private var editing: Account?
+    @State private var creating = false
+    @State private var deleteError = false
 
     var body: some View {
         NavigationStack {
@@ -22,27 +25,76 @@ struct AccountsOverviewView: View {
 
                 ForEach(overview.nodes) { node in
                     Section {
-                        parentRow(node)
+                        Button { editing = node.account } label: { parentRow(node) }
+                            .buttonStyle(.plain)
+                            .swipeActions(edge: .trailing) { deleteButton(node.account) }
+
                         if node.hasChildren {
                             // 親口座に直接ある（仮想口座に振り分けていない）残高
                             if node.ownBalance != 0 {
                                 breakdownRow(name: "（振分なし）", balance: node.ownBalance, isOwn: true)
                             }
                             ForEach(node.children, id: \.account.id) { child in
-                                breakdownRow(name: child.account.name, balance: child.balance, isOwn: false)
+                                Button {
+                                    editing = child.account
+                                } label: {
+                                    breakdownRow(name: child.account.name, balance: child.balance, isOwn: false)
+                                }
+                                .buttonStyle(.plain)
+                                .swipeActions(edge: .trailing) { deleteButton(child.account) }
                             }
                         }
                     }
                 }
+
+                Section {
+                    Button {
+                        creating = true
+                    } label: {
+                        Label("口座・支払い方法を追加", systemImage: "plus.circle")
+                    }
+                } footer: {
+                    Text("口座を選ぶと「貯金用」などの仮想口座を中に作れます。左スワイプで削除できます。")
+                }
             }
             .navigationTitle("口座")
             .navigationBarTitleDisplayMode(.inline)
-            .overlay {
-                if store.accountList.isEmpty {
-                    ContentUnavailableView("口座がありません", systemImage: "banknote",
-                                           description: Text("設定 > 口座・支払い方法 から追加できます。"))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { creating = true } label: { Image(systemName: "plus") }
                 }
             }
+            .overlay {
+                if store.accountList.isEmpty {
+                    ContentUnavailableView {
+                        Label("口座がありません", systemImage: "banknote")
+                    } description: {
+                        Text("右上の＋から口座・支払い方法を追加できます。")
+                    } actions: {
+                        Button("口座を追加") { creating = true }
+                            .buttonStyle(.borderedProminent)
+                    }
+                }
+            }
+            .sheet(item: $editing) { account in
+                AccountEditView(existing: account)
+            }
+            .sheet(isPresented: $creating) {
+                AccountEditView(existing: nil)
+            }
+            .alert("削除できません", isPresented: $deleteError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("この口座は取引で使われているか、仮想口座を持っています。先にそれらを変更・削除してください。")
+            }
+        }
+    }
+
+    private func deleteButton(_ account: Account) -> some View {
+        Button(role: .destructive) {
+            if !store.deleteAccount(account) { deleteError = true }
+        } label: {
+            Label("削除", systemImage: "trash")
         }
     }
 
