@@ -2,7 +2,7 @@ import Foundation
 
 extension Database {
     /// 現在のスキーマバージョン。変更時はインクリメントして差分DDLを足す。
-    static let schemaVersion: Int32 = 2
+    static let schemaVersion: Int32 = 3
 
     func migrateIfNeeded() throws {
         let current = userVersion()
@@ -14,6 +14,9 @@ extension Database {
         }
         if current < 2 {
             applyV2()
+        }
+        if current < 3 {
+            applyV3()
         }
         // 以降のバージョンはここに分岐を追加する。
 
@@ -104,6 +107,11 @@ extension Database {
               end_date TEXT
             )
             """)
+    }
+
+    /// v3: 口座に親子関係（仮想口座 / サブ口座）を追加。
+    private func applyV3() {
+        exec("ALTER TABLE accounts ADD COLUMN parent_id INTEGER REFERENCES accounts(id)")
     }
 
     /// デフォルトカテゴリ・現金口座・既定設定を投入する。

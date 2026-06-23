@@ -30,3 +30,13 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
     dependencies:
       - sdk: libsqlite3.tbd
+
+schemes:
+  Kakeibo:
+    build:
+      targets:
+        Kakeibo: all
+    run:
+      config: Debug
+    archive:
+      config: Release

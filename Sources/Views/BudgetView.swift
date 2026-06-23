@@ -3,6 +3,7 @@ import SwiftUI
 /// 予算管理: 全体予算とカテゴリ別予算の設定・消化率表示。
 struct BudgetView: View {
     @EnvironmentObject private var store: AppStore
+    @Environment(\.dismiss) private var dismiss
     @State private var editing: BudgetTarget?
 
     var body: some View {
@@ -51,6 +52,9 @@ struct BudgetView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { store.shiftMonth(by: 1) } label: { Image(systemName: "chevron.right") }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("完了") { dismiss() }
                 }
             }
             .sheet(item: $editing) { target in

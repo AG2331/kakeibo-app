@@ -124,8 +124,8 @@ struct RecurringEditView: View {
 
                 if type == .transfer {
                     Section {
-                        accountPicker("振替元", selection: $accountId)
-                        accountPicker("振替先", selection: $toAccountId)
+                        AccountPickerField(title: "振替元", selection: $accountId)
+                        AccountPickerField(title: "振替先", selection: $toAccountId)
                     }
                 } else {
                     Section {
@@ -133,7 +133,7 @@ struct RecurringEditView: View {
                             Text("選択してください").tag(Int64?.none)
                             ForEach(categoryOptions) { Text($0.name).tag(Int64?.some($0.id ?? 0)) }
                         }
-                        accountPicker("口座", selection: $accountId)
+                        AccountPickerField(title: "口座", selection: $accountId)
                     }
                 }
 
@@ -149,13 +149,6 @@ struct RecurringEditView: View {
                 Button("OK") { message = nil }
             } message: { Text(message ?? "") }
             .onAppear { if accountId == nil { accountId = store.accountList.first?.id } }
-        }
-    }
-
-    private func accountPicker(_ title: String, selection: Binding<Int64?>) -> some View {
-        Picker(title, selection: selection) {
-            Text("選択してください").tag(Int64?.none)
-            ForEach(store.accountList) { Text($0.name).tag(Int64?.some($0.id ?? 0)) }
         }
     }
 

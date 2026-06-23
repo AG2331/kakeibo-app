@@ -13,11 +13,6 @@ struct SettingsView: View {
                     Label("カテゴリ", systemImage: "tag")
                 }
                 NavigationLink {
-                    AccountListView()
-                } label: {
-                    Label("口座・支払い方法", systemImage: "creditcard")
-                }
-                NavigationLink {
                     RecurringListView()
                 } label: {
                     Label("定期取引", systemImage: "arrow.triangle.2.circlepath")

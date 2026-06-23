@@ -60,8 +60,8 @@ struct TransactionEditView: View {
 
                 if type == .transfer {
                     Section {
-                        accountPicker("振替元", selection: $accountId)
-                        accountPicker("振替先", selection: $toAccountId)
+                        AccountPickerField(title: "振替元", selection: $accountId)
+                        AccountPickerField(title: "振替先", selection: $toAccountId)
                     }
                 } else {
                     Section {
@@ -71,7 +71,7 @@ struct TransactionEditView: View {
                                 Text(c.name).tag(Int64?.some(c.id ?? 0))
                             }
                         }
-                        accountPicker("口座", selection: $accountId)
+                        AccountPickerField(title: "口座", selection: $accountId)
                     }
                 }
 
@@ -111,15 +111,6 @@ struct TransactionEditView: View {
             }
             .onAppear {
                 if accountId == nil { accountId = store.accountList.first?.id }
-            }
-        }
-    }
-
-    private func accountPicker(_ title: String, selection: Binding<Int64?>) -> some View {
-        Picker(title, selection: selection) {
-            Text("選択してください").tag(Int64?.none)
-            ForEach(store.accountList) { a in
-                Text(a.name).tag(Int64?.some(a.id ?? 0))
             }
         }
     }
