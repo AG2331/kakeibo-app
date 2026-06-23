@@ -7,6 +7,7 @@ struct AccountsOverviewView: View {
     @State private var editing: Account?
     @State private var creating = false
     @State private var deleteError = false
+    @State private var collapsed: Set<Int64> = []
 
     var body: some View {
         NavigationStack {
@@ -26,11 +27,9 @@ struct AccountsOverviewView: View {
                 // 支払い方法はひとつのセクションにまとめ、相互の間隔を詰める。
                 Section {
                     ForEach(overview.nodes) { node in
-                        Button { editing = node.account } label: { parentRow(node) }
-                            .buttonStyle(.plain)
-                            .swipeActions(edge: .trailing) { deleteButton(node.account) }
+                        parentRowContainer(node)
 
-                        if node.hasChildren {
+                        if node.hasChildren && !isCollapsed(node.account.id) {
                             // 親口座に直接ある（仮想口座に振り分けていない）残高
                             if node.ownBalance != 0 {
                                 breakdownRow(name: "（振分なし）", balance: node.ownBalance, isOwn: true)
@@ -97,6 +96,34 @@ struct AccountsOverviewView: View {
         } label: {
             Label("削除", systemImage: "trash")
         }
+    }
+
+    /// 親口座の行。仮想口座があれば折りたたみ用シェブロンを左に表示する。
+    private func parentRowContainer(_ node: AccountNode) -> some View {
+        HStack(spacing: 8) {
+            if node.hasChildren {
+                Button { toggle(node.account.id) } label: {
+                    Image(systemName: isCollapsed(node.account.id) ? "chevron.right" : "chevron.down")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .frame(width: 22, height: 22)
+                }
+                .buttonStyle(.borderless)
+            } else {
+                Spacer().frame(width: 22)
+            }
+            Button { editing = node.account } label: { parentRow(node) }
+                .buttonStyle(.plain)
+        }
+        .swipeActions(edge: .trailing) { deleteButton(node.account) }
+    }
+
+    private func isCollapsed(_ id: Int64?) -> Bool {
+        id.map { collapsed.contains($0) } ?? false
+    }
+
+    private func toggle(_ id: Int64?) {
+        guard let id else { return }
+        if collapsed.contains(id) { collapsed.remove(id) } else { collapsed.insert(id) }
     }
 
     private func parentRow(_ node: AccountNode) -> some View {

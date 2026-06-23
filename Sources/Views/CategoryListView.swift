@@ -6,19 +6,22 @@ struct CategoryListView: View {
     @State private var editing: Category?
     @State private var creatingType: TxType?
     @State private var deleteError = false
+    @State private var collapsed: Set<Int64> = []
 
     var body: some View {
         List {
             ForEach([TxType.expense, TxType.income], id: \.self) { type in
                 Section(type.label) {
-                    ForEach(store.orderedCategories(of: type), id: \.category.id) { entry in
-                        Button { editing = entry.category } label: {
-                            row(entry.category, depth: entry.depth)
+                    ForEach(store.categories(of: type).filter { $0.parentId == nil }) { parent in
+                        parentRow(parent, type: type)
+
+                        if !isCollapsed(parent.id) {
+                            ForEach(store.categories(of: type).filter { $0.parentId == parent.id }) { child in
+                                Button { editing = child } label: { row(child, depth: 1) }
+                                    .buttonStyle(.plain)
+                                    .swipeActions(edge: .trailing) { deleteButton(child) }
+                            }
                         }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete { offsets in
-                        delete(offsets, type: type)
                     }
 
                     Button {
@@ -44,6 +47,26 @@ struct CategoryListView: View {
         }
     }
 
+    /// 親カテゴリの行。子があれば折りたたみ用のシェブロンを左に表示する。
+    private func parentRow(_ category: Category, type: TxType) -> some View {
+        let hasChildren = !store.categories(of: type).filter { $0.parentId == category.id }.isEmpty
+        return HStack(spacing: 8) {
+            if hasChildren {
+                Button { toggle(category.id) } label: {
+                    Image(systemName: isCollapsed(category.id) ? "chevron.right" : "chevron.down")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .frame(width: 22, height: 22)
+                }
+                .buttonStyle(.borderless)
+            } else {
+                Spacer().frame(width: 22)
+            }
+            Button { editing = category } label: { row(category, depth: 0) }
+                .buttonStyle(.plain)
+        }
+        .swipeActions(edge: .trailing) { deleteButton(category) }
+    }
+
     private func row(_ category: Category, depth: Int) -> some View {
         HStack(spacing: 12) {
             if depth > 0 {
@@ -63,13 +86,21 @@ struct CategoryListView: View {
         .padding(.leading, depth > 0 ? 12 : 0)
     }
 
-    private func delete(_ offsets: IndexSet, type: TxType) {
-        let list = store.orderedCategories(of: type)
-        for index in offsets {
-            if !store.deleteCategory(list[index].category) {
-                deleteError = true
-            }
+    private func deleteButton(_ category: Category) -> some View {
+        Button(role: .destructive) {
+            if !store.deleteCategory(category) { deleteError = true }
+        } label: {
+            Label("削除", systemImage: "trash")
         }
+    }
+
+    private func isCollapsed(_ id: Int64?) -> Bool {
+        id.map { collapsed.contains($0) } ?? false
+    }
+
+    private func toggle(_ id: Int64?) {
+        guard let id else { return }
+        if collapsed.contains(id) { collapsed.remove(id) } else { collapsed.insert(id) }
     }
 }
 
