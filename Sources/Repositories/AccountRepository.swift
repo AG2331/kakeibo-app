@@ -13,17 +13,31 @@ struct AccountRepository {
     @discardableResult
     func insert(_ a: Account) -> Int64 {
         db.run(
-            "INSERT INTO accounts(name, type, initial_balance, sort_order, archived, parent_id) VALUES(?,?,?,?,?,?)",
+            """
+            INSERT INTO accounts(
+              name, type, initial_balance, sort_order, archived, parent_id,
+              closing_day, payment_day, payment_month_offset, payment_account_id
+            ) VALUES(?,?,?,?,?,?,?,?,?,?)
+            """,
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
-             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId)])
+             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId),
+             SQLValue(a.closingDay), SQLValue(a.paymentDay), .int(Int64(a.paymentMonthOffset)),
+             SQLValue(a.paymentAccountId)])
     }
 
     func update(_ a: Account) {
         guard let id = a.id else { return }
         db.run(
-            "UPDATE accounts SET name=?, type=?, initial_balance=?, sort_order=?, archived=?, parent_id=? WHERE id=?",
+            """
+            UPDATE accounts SET
+              name=?, type=?, initial_balance=?, sort_order=?, archived=?, parent_id=?,
+              closing_day=?, payment_day=?, payment_month_offset=?, payment_account_id=?
+            WHERE id=?
+            """,
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
-             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId), .int(id)])
+             .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId),
+             SQLValue(a.closingDay), SQLValue(a.paymentDay), .int(Int64(a.paymentMonthOffset)),
+             SQLValue(a.paymentAccountId), .int(id)])
     }
 
     func delete(id: Int64) {
@@ -67,7 +81,11 @@ struct AccountRepository {
             initialBalance: r.int("initial_balance") ?? 0,
             sortOrder: r.int("sort_order") ?? 0,
             archived: (r.int("archived") ?? 0) == 1,
-            parentId: r.int64("parent_id")
+            parentId: r.int64("parent_id"),
+            closingDay: r.int("closing_day"),
+            paymentDay: r.int("payment_day"),
+            paymentMonthOffset: r.int("payment_month_offset") ?? 1,
+            paymentAccountId: r.int64("payment_account_id")
         )
     }
 }

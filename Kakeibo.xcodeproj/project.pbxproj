@@ -29,6 +29,7 @@
 		86BE3CEBB2BD5D0BAF3A2574 /* AccountsOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C04E813875E39313FBDB39 /* AccountsOverviewView.swift */; };
 		880C599FA97641D0BC65BEE0 /* BudgetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9089C16A7382A4736C8725D /* BudgetRepository.swift */; };
 		8FB7EB82138354E1177B87DC /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */; };
+		91CB0751C26E0F76523D461B /* CreditCardCycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218E9C5BC937337EA5D679C8 /* CreditCardCycle.swift */; };
 		A2BD769BF0CD0F851AE7DDC4 /* SettingsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA4EF3DE36D4408B189F0A5 /* SettingsRepository.swift */; };
 		A3E64654F93D7381036A243F /* RecurringRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96235FA60502D1EA1549A0C /* RecurringRule.swift */; };
 		B0038011838174DBA30376FF /* RecurringListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A989A51E1A5CBF6C4894408F /* RecurringListView.swift */; };
@@ -48,6 +49,7 @@
 		0388790C61F6B8F057F078B7 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		15B3EC58EBF66687D4C4C704 /* CalendarMonthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarMonthView.swift; sourceTree = "<group>"; };
 		1BB720DC44AC8A1286DC6777 /* Dates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dates.swift; sourceTree = "<group>"; };
+		218E9C5BC937337EA5D679C8 /* CreditCardCycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreditCardCycle.swift; sourceTree = "<group>"; };
 		25F21A35CC3E76B7775310DB /* CategoryListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryListView.swift; sourceTree = "<group>"; };
 		271FD4BC971F1681A24FB747 /* Migrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Migrations.swift; sourceTree = "<group>"; };
 		3BEF443B5D1757DCD88A5885 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -182,6 +184,7 @@
 			isa = PBXGroup;
 			children = (
 				44FADBF9296CD30E41F87C35 /* Color+Hex.swift */,
+				218E9C5BC937337EA5D679C8 /* CreditCardCycle.swift */,
 				1BB720DC44AC8A1286DC6777 /* Dates.swift */,
 				BEB10C847597C144B45D2354 /* Money.swift */,
 			);
@@ -284,6 +287,7 @@
 				F889AACE946C998AC3809040 /* CategoryListView.swift in Sources */,
 				594B552172B71DBEF93319D4 /* CategoryRepository.swift in Sources */,
 				26A4C3B6E8E76D493A3A4B0D /* Color+Hex.swift in Sources */,
+				91CB0751C26E0F76523D461B /* CreditCardCycle.swift in Sources */,
 				FDB1C00DDA86014046243D70 /* DataView.swift in Sources */,
 				116C0E21B0D870F1945A5FD1 /* Database.swift in Sources */,
 				6D6B1CA3390AAC16945B56FC /* Dates.swift in Sources */,

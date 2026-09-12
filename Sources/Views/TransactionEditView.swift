@@ -1,5 +1,16 @@
 import SwiftUI
 
+/// 新規取引フォームの初期値（既存取引の編集ではなく、プリフィルされた未保存の新規取引を開くときに使う）。
+struct TxDraft {
+    var type: TxType = .expense
+    var amount: Int = 0
+    var date: Date = Date()
+    var categoryId: Int64?
+    var accountId: Int64?
+    var toAccountId: Int64?
+    var memo: String = ""
+}
+
 /// 取引の追加・編集画面。
 struct TransactionEditView: View {
     @EnvironmentObject private var store: AppStore
@@ -17,15 +28,16 @@ struct TransactionEditView: View {
     @State private var showDeleteConfirm = false
     @State private var validationMessage: String?
 
-    init(existing: TxRecord?) {
+    init(existing: TxRecord?, draft: TxDraft? = nil) {
         self.existing = existing
-        _type = State(initialValue: existing?.type ?? .expense)
-        _amountText = State(initialValue: existing.map { String($0.amount) } ?? "")
-        _date = State(initialValue: existing.map { Dates.parse($0.date) } ?? Date())
-        _categoryId = State(initialValue: existing?.categoryId)
-        _accountId = State(initialValue: existing?.accountId)
-        _toAccountId = State(initialValue: existing?.toAccountId)
-        _memo = State(initialValue: existing?.memo ?? "")
+        _type = State(initialValue: existing?.type ?? draft?.type ?? .expense)
+        _amountText = State(initialValue: existing.map { String($0.amount) }
+                             ?? draft.flatMap { $0.amount > 0 ? String($0.amount) : nil } ?? "")
+        _date = State(initialValue: existing.map { Dates.parse($0.date) } ?? draft?.date ?? Date())
+        _categoryId = State(initialValue: existing?.categoryId ?? draft?.categoryId)
+        _accountId = State(initialValue: existing?.accountId ?? draft?.accountId)
+        _toAccountId = State(initialValue: existing?.toAccountId ?? draft?.toAccountId)
+        _memo = State(initialValue: existing?.memo ?? draft?.memo ?? "")
     }
 
     private var isEdit: Bool { existing != nil }
@@ -60,6 +72,8 @@ struct TransactionEditView: View {
                     Section {
                         AccountPickerField(title: "振替元", selection: $accountId)
                         AccountPickerField(title: "振替先", selection: $toAccountId)
+                    } footer: {
+                        Text("クレジットカードの引き落としはここで「振替」として記録してください。「支出」で記録すると購入時と二重に計上されます。")
                     }
                 } else {
                     Section {

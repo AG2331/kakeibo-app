@@ -11,6 +11,10 @@ struct AccountEditView: View {
     @State private var type: AccountType
     @State private var initialBalanceText: String
     @State private var parentId: Int64?
+    @State private var closingDay: Int
+    @State private var paymentDay: Int
+    @State private var paymentMonthOffset: Int
+    @State private var paymentAccountId: Int64?
 
     init(existing: Account?) {
         self.existing = existing
@@ -18,6 +22,41 @@ struct AccountEditView: View {
         _type = State(initialValue: existing?.type ?? .cash)
         _initialBalanceText = State(initialValue: existing.map { String($0.initialBalance) } ?? "0")
         _parentId = State(initialValue: existing?.parentId)
+        _closingDay = State(initialValue: existing?.closingDay ?? 0)
+        _paymentDay = State(initialValue: existing?.paymentDay ?? 27)
+        _paymentMonthOffset = State(initialValue: existing?.paymentMonthOffset ?? 1)
+        _paymentAccountId = State(initialValue: existing?.paymentAccountId)
+    }
+
+    /// 締め日・支払日ピッカーの選択肢（1-31日 + 月末）。
+    private var dayOptions: some View {
+        ForEach(Array(1...31) + [0], id: \.self) { d in
+            Text(d == 0 ? "月末" : "\(d)日").tag(d)
+        }
+    }
+
+    /// クレジット口座用: 締め日・支払日・引き落とし元口座の設定セクション。
+    @ViewBuilder
+    private var creditSettingsSection: some View {
+        Section {
+            Picker("締め日", selection: $closingDay) { dayOptions }
+            Picker("支払月", selection: $paymentMonthOffset) {
+                Text("当月").tag(0)
+                Text("翌月").tag(1)
+                Text("翌々月").tag(2)
+            }
+            Picker("支払日", selection: $paymentDay) { dayOptions }
+            Picker("引き落とし元口座", selection: $paymentAccountId) {
+                Text("未設定").tag(Int64?.none)
+                ForEach(store.accountList.filter { $0.type != .credit && $0.id != existing?.id }) { acc in
+                    Text(acc.name).tag(Int64?.some(acc.id ?? 0))
+                }
+            }
+        } header: {
+            Text("締め日・支払日")
+        } footer: {
+            Text("引き落とし（口座からの支払い）は、この口座への「振替」として記録してください。「支出」として記録すると、購入時と二重に計上されます。")
+        }
     }
 
     /// 親候補（独立口座のみ、自分自身は除く）。子を持つ口座は親に従属させない。
@@ -44,6 +83,9 @@ struct AccountEditView: View {
                     } footer: {
                         Text("親口座を選ぶと、その口座内の仮想口座（例: 貯金用）になります。")
                     }
+                }
+                if type == .credit {
+                    creditSettingsSection
                 }
                 Section("初期残高") {
                     HStack {
@@ -76,7 +118,11 @@ struct AccountEditView: View {
             initialBalance: Money.parse(initialBalanceText) ?? 0,
             sortOrder: existing?.sortOrder ?? 0,
             archived: existing?.archived ?? false,
-            parentId: parentId
+            parentId: parentId,
+            closingDay: type == .credit ? closingDay : nil,
+            paymentDay: type == .credit ? paymentDay : nil,
+            paymentMonthOffset: paymentMonthOffset,
+            paymentAccountId: type == .credit ? paymentAccountId : nil
         )
         store.saveAccount(account)
         dismiss()

@@ -24,6 +24,7 @@ final class AppStore: ObservableObject {
     @Published var accountBalances: [Int64: Int] = [:]
     @Published var settings: AppSettings = .default
     @Published var recurringRules: [RecurringRule] = []
+    @Published var creditCardStatements: [Int64: CreditCardStatementInfo] = [:]
 
     init(db: Database, dbPath: String) {
         self.db = db
@@ -70,6 +71,9 @@ final class AppStore: ObservableObject {
             a.id.map { ($0, accounts.balance(id: $0)) }
         })
         recurringRules = recurring.all()
+        creditCardStatements = Dictionary(uniqueKeysWithValues: accountList
+            .filter { $0.hasStatementConfig }
+            .compactMap { a in a.id.flatMap { id in creditCardStatement(for: a).map { (id, $0) } } })
     }
 
     func shiftMonth(by delta: Int) {
@@ -188,6 +192,20 @@ final class AppStore: ObservableObject {
             }
         let grand = nodes.reduce(0) { $0 + $1.total }
         return (grand, nodes)
+    }
+
+    /// クレジット口座の締め日・支払日設定から、未精算額・次回請求予定を計算する。
+    func creditCardStatement(for account: Account) -> CreditCardStatementInfo? {
+        guard account.hasStatementConfig, let id = account.id,
+              let closingDay = account.closingDay, let paymentDay = account.paymentDay else { return nil }
+        let (start, end) = CreditCardCycle.lastClosedPeriod(closingDay: closingDay)
+        let due = CreditCardCycle.paymentDate(periodEnd: end, paymentDay: paymentDay,
+                                              monthOffset: account.paymentMonthOffset)
+        let suggested = transactions.expenseSum(accountId: id, start: start, end: end)
+        let outstanding = max(0, -(accountBalances[id] ?? 0))
+        return CreditCardStatementInfo(accountId: id, periodStart: start, periodEnd: end,
+                                       outstandingAmount: outstanding, nextPaymentDate: due,
+                                       suggestedAmount: suggested)
     }
 
     // MARK: - 設定

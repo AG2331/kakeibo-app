@@ -8,6 +8,7 @@ struct AccountsOverviewView: View {
     @State private var creating = false
     @State private var deleteError = false
     @State private var collapsed: Set<Int64> = []
+    @State private var settlementDraft: CreditCardStatementInfo?
 
     var body: some View {
         NavigationStack {
@@ -28,6 +29,9 @@ struct AccountsOverviewView: View {
                 Section {
                     ForEach(overview.nodes) { node in
                         parentRowContainer(node)
+                        if let info = store.creditCardStatements[node.account.id ?? -1] {
+                            creditStatementRow(info)
+                        }
 
                         if node.hasChildren && !isCollapsed(node.account.id) {
                             // 親口座に直接ある（仮想口座に振り分けていない）残高
@@ -42,6 +46,9 @@ struct AccountsOverviewView: View {
                                 }
                                 .buttonStyle(.plain)
                                 .swipeActions(edge: .trailing) { deleteButton(child.account) }
+                                if let info = store.creditCardStatements[child.account.id ?? -1] {
+                                    creditStatementRow(info)
+                                }
                             }
                         }
                     }
@@ -81,6 +88,17 @@ struct AccountsOverviewView: View {
             }
             .sheet(isPresented: $creating) {
                 AccountEditView(existing: nil)
+            }
+            .sheet(item: $settlementDraft) { info in
+                let card = store.accountList.first { $0.id == info.accountId }
+                TransactionEditView(existing: nil, draft: TxDraft(
+                    type: .transfer,
+                    amount: info.suggestedAmount,
+                    date: Dates.parse(info.nextPaymentDate),
+                    accountId: card?.paymentAccountId,
+                    toAccountId: info.accountId,
+                    memo: "カード引き落とし"
+                ))
             }
             .alert("削除できません", isPresented: $deleteError) {
                 Button("OK", role: .cancel) {}
@@ -158,6 +176,26 @@ struct AccountsOverviewView: View {
                 .foregroundStyle(balance >= 0 ? .secondary : TxPalette.expense)
         }
         .padding(.leading, 8)
+    }
+
+    /// クレジット口座の未精算額・次回請求予定を表示する行。
+    private func creditStatementRow(_ info: CreditCardStatementInfo) -> some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("未精算額 \(Money.format(info.outstandingAmount))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text("次回請求(\(Dates.displayDate(info.nextPaymentDate))): \(Money.format(info.suggestedAmount))")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer()
+            Button("引き落としを記録") { settlementDraft = info }
+                .font(.caption2)
+                .buttonStyle(.bordered)
+        }
+        .padding(.leading, 32)
+        .padding(.vertical, 2)
     }
 
     private func icon(for type: AccountType) -> String {

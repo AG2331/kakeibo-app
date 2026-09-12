@@ -2,7 +2,7 @@ import Foundation
 
 extension Database {
     /// 現在のスキーマバージョン。変更時はインクリメントして差分DDLを足す。
-    static let schemaVersion: Int32 = 3
+    static let schemaVersion: Int32 = 4
 
     func migrateIfNeeded() throws {
         let current = userVersion()
@@ -17,6 +17,9 @@ extension Database {
         }
         if current < 3 {
             applyV3()
+        }
+        if current < 4 {
+            applyV4()
         }
         // 以降のバージョンはここに分岐を追加する。
 
@@ -112,6 +115,14 @@ extension Database {
     /// v3: 口座に親子関係（仮想口座 / サブ口座）を追加。
     private func applyV3() {
         exec("ALTER TABLE accounts ADD COLUMN parent_id INTEGER REFERENCES accounts(id)")
+    }
+
+    /// v4: クレジットカードの締め日・支払日・引き落とし元口座を追加。
+    private func applyV4() {
+        exec("ALTER TABLE accounts ADD COLUMN closing_day INTEGER")
+        exec("ALTER TABLE accounts ADD COLUMN payment_day INTEGER")
+        exec("ALTER TABLE accounts ADD COLUMN payment_month_offset INTEGER NOT NULL DEFAULT 1")
+        exec("ALTER TABLE accounts ADD COLUMN payment_account_id INTEGER REFERENCES accounts(id)")
     }
 
     /// デフォルトカテゴリ・現金口座・既定設定を投入する。
