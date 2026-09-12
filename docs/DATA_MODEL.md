@@ -26,6 +26,17 @@ recurring_rules >── categories / accounts（テンプレート）
 | initial_balance | INTEGER | NOT NULL DEFAULT 0 | 初期残高 |
 | sort_order | INTEGER | NOT NULL DEFAULT 0 | 並び順 |
 | archived | INTEGER | NOT NULL DEFAULT 0 | 0/1 |
+| parent_id | INTEGER | FK accounts.id NULL | 仮想口座の場合の親口座（v3） |
+| closing_day | INTEGER | NULL | クレカ締め日。1-31、0=月末（typeがcreditの場合のみ意味を持つ、v4） |
+| payment_day | INTEGER | NULL | クレカ支払日（引き落とし日）。1-31、0=月末（v4） |
+| payment_month_offset | INTEGER | NOT NULL DEFAULT 1 | 締め月から支払月までのオフセット。0=当月/1=翌月/2=翌々月（v4） |
+| payment_account_id | INTEGER | FK accounts.id NULL | 引き落とし元口座（v4） |
+
+#### クレジットカード決済の二重計上防止
+
+カード決済は決済したタイミングで `expense`（口座=クレジット口座）として記録し、これを支出計上のタイミングとする。後日の口座引き落としは、二重計上を避けるため `expense` ではなく `transfer`（`account_id`=引き落とし元口座 → `to_account_id`=クレジット口座）として記録する。振替は収支集計（`type IN ('income','expense')` のフィルタ）から常に除外されるため、この運用だけで追加のスキーマなしに二重計上を防げる。クレジット口座の残高はこの結果として「未払い残高（マイナス）」を表す。
+
+`closing_day`/`payment_day`/`payment_month_offset`/`payment_account_id` は、この引き落とし額（直近で締めた期間の支出合計）と次回引き落とし日を自動計算して口座タブに表示するための補助情報であり、会計上の二重計上防止ロジック自体には必須ではない。
 
 ### categories（カテゴリ）
 | 列 | 型 | 制約 | 説明 |

@@ -95,6 +95,16 @@ struct TransactionRepository {
             .first?.int("c") ?? 0
     }
 
+    /// 指定口座・期間内の支出合計（クレカ請求額の算出用）。
+    func expenseSum(accountId: Int64, start: String, end: String) -> Int {
+        db.query(
+            """
+            SELECT COALESCE(SUM(amount),0) AS s FROM transactions
+            WHERE type='expense' AND account_id=? AND date >= ? AND date <= ?
+            """, [.int(accountId), .text(start), .text(end)]
+        ).first?.int("s") ?? 0
+    }
+
     /// 口座を参照する取引数（出金元/振替先の両方）。
     func countByAccount(id: Int64) -> Int {
         db.query(
