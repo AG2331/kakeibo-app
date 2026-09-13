@@ -31,12 +31,29 @@ targets:
     dependencies:
       - sdk: libsqlite3.tbd
 
+  KakeiboTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: Kakeibo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.kakeibo.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+
 schemes:
   Kakeibo:
     build:
       targets:
         Kakeibo: all
+        KakeiboTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - KakeiboTests
     archive:
       config: Release

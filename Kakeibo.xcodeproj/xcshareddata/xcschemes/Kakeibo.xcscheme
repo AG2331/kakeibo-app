@@ -21,6 +21,20 @@
                ReferencedContainer = "container:Kakeibo.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E63E4D7AE43B8DCCDEE34894"
+               BuildableName = "KakeiboTests.xctest"
+               BlueprintName = "KakeiboTests"
+               ReferencedContainer = "container:Kakeibo.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -39,7 +53,20 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "E63E4D7AE43B8DCCDEE34894"
+               BuildableName = "KakeiboTests.xctest"
+               BlueprintName = "KakeiboTests"
+               ReferencedContainer = "container:Kakeibo.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
+      <CommandLineArguments>
+      </CommandLineArguments>
    </TestAction>
    <LaunchAction
       buildConfiguration = "Debug"
