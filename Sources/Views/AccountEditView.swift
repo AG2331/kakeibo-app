@@ -16,12 +16,15 @@ struct AccountEditView: View {
     @State private var paymentMonthOffset: Int
     @State private var paymentAccountId: Int64?
     @State private var saveError: String?
+    /// 初期残高がマイナス（カードの既存債務など）か。テンキーには「−」が無いので切替式にする。
+    @State private var initialBalanceNegative: Bool
 
     init(existing: Account?) {
         self.existing = existing
         _name = State(initialValue: existing?.name ?? "")
         _type = State(initialValue: existing?.type ?? .cash)
-        _initialBalanceText = State(initialValue: existing.map { String($0.initialBalance) } ?? "0")
+        _initialBalanceText = State(initialValue: existing.map { String(abs($0.initialBalance)) } ?? "0")
+        _initialBalanceNegative = State(initialValue: (existing?.initialBalance ?? 0) < 0)
         _parentId = State(initialValue: existing?.parentId)
         _closingDay = State(initialValue: existing?.closingDay ?? 0)
         _paymentDay = State(initialValue: existing?.paymentDay ?? 27)
@@ -56,8 +59,32 @@ struct AccountEditView: View {
         } header: {
             Text("締め日・支払日")
         } footer: {
-            Text("引き落とし（口座からの支払い）は、この口座への「振替」として記録してください。「支出」として記録すると、購入時と二重に計上されます。")
+            VStack(alignment: .leading, spacing: 6) {
+                if let warning = statementConfigWarning {
+                    Text(warning).foregroundStyle(TxPalette.expense)
+                } else {
+                    Text("例: \(cycleExample)")
+                }
+                Text("引き落とし（口座からの支払い）は、この口座への「振替」として記録してください。「支出」として記録すると、購入時と二重に計上されます。")
+            }
         }
+    }
+
+    /// 設定した締め日・支払日で実際にどうなるかの例。
+    private var cycleExample: String {
+        let closing = CreditCardCycle.lastClosedPeriod(closingDay: closingDay).end
+        let payment = CreditCardCycle.paymentDate(periodEnd: closing, paymentDay: paymentDay,
+                                                  monthOffset: paymentMonthOffset)
+        return "\(Dates.displayDate(closing))締め → \(Dates.displayDate(payment))払い"
+    }
+
+    /// 支払日が締め日より前になる組み合わせ（当月払いで支払日 < 締め日 など）を弾く。
+    private var statementConfigWarning: String? {
+        let closing = CreditCardCycle.lastClosedPeriod(closingDay: closingDay).end
+        let payment = CreditCardCycle.paymentDate(periodEnd: closing, paymentDay: paymentDay,
+                                                  monthOffset: paymentMonthOffset)
+        guard payment <= closing else { return nil }
+        return "支払日が締め日より前になります（\(Dates.displayDate(closing))締め → \(Dates.displayDate(payment))払い）。支払月を翌月にするか、支払日を締め日より後にしてください。"
     }
 
     /// 親候補（独立口座のみ、自分自身は除く）。子を持つ口座は親に従属させない。
@@ -88,11 +115,25 @@ struct AccountEditView: View {
                 if type == .credit {
                     creditSettingsSection
                 }
-                Section("初期残高") {
+                Section {
                     HStack {
+                        Button {
+                            initialBalanceNegative.toggle()
+                        } label: {
+                            Text(initialBalanceNegative ? "−" : "＋")
+                                .font(.body.bold())
+                                .frame(width: 32, height: 32)
+                        }
+                        .buttonStyle(.bordered)
+                        .foregroundStyle(initialBalanceNegative ? TxPalette.expense : Color.primary)
+
                         Text(Money.currency.symbol).foregroundStyle(.secondary)
                         AmountField(placeholder: "0", text: $initialBalanceText)
                     }
+                } header: {
+                    Text("初期残高")
+                } footer: {
+                    Text("クレジットカードの未払い残高など、マイナスから始める場合は左の「＋」を押して「−」にしてください。")
                 }
             }
             .errorAlert("保存できません", message: $saveError)
@@ -113,11 +154,16 @@ struct AccountEditView: View {
     private func save() {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
+        if type == .credit, let warning = statementConfigWarning {
+            saveError = warning
+            return
+        }
+        let magnitude = Money.parse(initialBalanceText) ?? 0
         let account = Account(
             id: existing?.id,
             name: trimmed,
             type: type,
-            initialBalance: Money.parse(initialBalanceText) ?? 0,
+            initialBalance: initialBalanceNegative ? -magnitude : magnitude,
             sortOrder: existing?.sortOrder ?? 0,
             archived: existing?.archived ?? false,
             parentId: parentId,

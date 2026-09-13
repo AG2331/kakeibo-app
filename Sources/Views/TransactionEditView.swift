@@ -42,6 +42,12 @@ struct TransactionEditView: View {
 
     private var isEdit: Bool { existing != nil }
 
+    /// 振替先がクレジット口座か（＝カードの引き落としを記録しようとしている）。
+    private var isCreditCardSettlement: Bool {
+        guard let to = toAccountId else { return false }
+        return store.accountList.first { $0.id == to }?.type == .credit
+    }
+
     /// 親→サブの順に並べたカテゴリ（サブはインデント表示）。
     private var categoryOptions: [(category: Category, depth: Int)] {
         store.orderedCategories(of: type)
@@ -73,7 +79,10 @@ struct TransactionEditView: View {
                         AccountPickerField(title: "振替元", selection: $accountId)
                         AccountPickerField(title: "振替先", selection: $toAccountId)
                     } footer: {
-                        Text("クレジットカードの引き落としはここで「振替」として記録してください。「支出」で記録すると購入時と二重に計上されます。")
+                        // カード宛の振替のときだけ案内する（貯金への振替などでは出さない）
+                        if isCreditCardSettlement {
+                            Text("カードの引き落としはこの「振替」で記録します。「支出」で記録すると購入時と二重に計上されます。")
+                        }
                     }
                 } else {
                     Section {

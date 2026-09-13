@@ -43,11 +43,16 @@ struct RecurringListView: View {
         let cat = rule.categoryId.flatMap { store.categoriesById[$0] }
         let color = rule.type == .income ? TxPalette.income
             : (rule.type == .transfer ? TxPalette.transfer : TxPalette.expense)
+        // メモ（家賃・サブスク名など）があればそれを見出しにする方が見分けやすい。
+        let fallback = rule.type == .transfer ? "振替" : (cat?.name ?? rule.type.label)
+        let title = rule.memo?.trimmingCharacters(in: .whitespaces).isEmpty == false
+            ? rule.memo! : fallback
+        let subtitle = title == fallback ? "" : "\(fallback) ・ "
         return HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(rule.type == .transfer ? "振替" : (cat?.name ?? rule.type.label))
+                Text(title)
                     .font(.body)
-                Text("\(rule.frequency.label) ・ 次回 \(rule.nextDate)")
+                Text("\(subtitle)\(rule.frequency.label) ・ 次回 \(rule.nextDate)")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()

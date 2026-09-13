@@ -97,12 +97,15 @@ struct TransactionRepository {
             .first?.int("c") ?? 0
     }
 
-    /// 指定口座・期間内の支出合計（クレカ請求額の算出用）。
-    func expenseSum(accountId: Int64, start: String, end: String) -> Int {
+    /// 指定口座・期間内の正味利用額（支出 − 収入）。クレカ請求額の算出用。
+    /// カードへの返金を「収入」で記録した場合に請求額から差し引かれる。
+    func netUsage(accountId: Int64, start: String, end: String) -> Int {
         db.query(
             """
-            SELECT COALESCE(SUM(amount),0) AS s FROM transactions
-            WHERE type='expense' AND account_id=? AND date >= ? AND date <= ?
+            SELECT COALESCE(SUM(CASE WHEN type='expense' THEN amount END),0)
+                 - COALESCE(SUM(CASE WHEN type='income' THEN amount END),0) AS s
+            FROM transactions
+            WHERE account_id=? AND date >= ? AND date <= ? AND type IN ('expense','income')
             """, [.int(accountId), .text(start), .text(end)]
         ).first?.int("s") ?? 0
     }

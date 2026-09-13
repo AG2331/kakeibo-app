@@ -2,7 +2,7 @@ import Foundation
 
 extension Database {
     /// 現在のスキーマバージョン。変更時はインクリメントして差分DDLを足す。
-    static let schemaVersion: Int32 = 4
+    static let schemaVersion: Int32 = 5
 
     func migrateIfNeeded() throws {
         let current = userVersion()
@@ -20,6 +20,9 @@ extension Database {
         }
         if current < 4 {
             try applyV4()
+        }
+        if current < 5 {
+            try applyV5()
         }
         // 以降のバージョンはここに分岐を追加する。
 
@@ -140,6 +143,11 @@ extension Database {
         try migrate(4, "ALTER TABLE accounts ADD COLUMN payment_day INTEGER")
         try migrate(4, "ALTER TABLE accounts ADD COLUMN payment_month_offset INTEGER NOT NULL DEFAULT 1")
         try migrate(4, "ALTER TABLE accounts ADD COLUMN payment_account_id INTEGER REFERENCES accounts(id)")
+    }
+
+    /// v5: 振替先のインデックス。残高計算が to_account_id で全表走査していたため。
+    private func applyV5() throws {
+        try migrate(5, "CREATE INDEX IF NOT EXISTS idx_tx_to_account ON transactions(to_account_id)")
     }
 
     /// デフォルトカテゴリ・現金口座・既定設定を投入する。

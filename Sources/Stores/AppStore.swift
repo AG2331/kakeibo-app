@@ -274,7 +274,7 @@ final class AppStore: ObservableObject {
 
         // 直近で締まった請求
         let (start, end) = CreditCardCycle.lastClosedPeriod(closingDay: closingDay)
-        let billed = transactions.expenseSum(accountId: id, start: start, end: end)
+        let billed = max(0, transactions.netUsage(accountId: id, start: start, end: end))
         let paid = transactions.transferInSum(accountId: id, since: end)
         let due = max(0, billed - paid)
         let dueDate = CreditCardCycle.paymentDate(periodEnd: end, paymentDay: paymentDay,
@@ -282,7 +282,7 @@ final class AppStore: ObservableObject {
 
         // まだ締まっていない進行中サイクル
         let (openStart, openEnd) = CreditCardCycle.openPeriod(closingDay: closingDay)
-        let upcoming = transactions.expenseSum(accountId: id, start: openStart, end: openEnd)
+        let upcoming = max(0, transactions.netUsage(accountId: id, start: openStart, end: openEnd))
         let upcomingDue = CreditCardCycle.paymentDate(periodEnd: openEnd, paymentDay: paymentDay,
                                                       monthOffset: account.paymentMonthOffset)
 
@@ -450,15 +450,20 @@ final class AppStore: ObservableObject {
             let cols = [t.date, t.type.label, String(t.amount), cat, acc, toAcc, t.memo ?? ""]
             lines.append(cols.map(Self.csvEscape).joined(separator: ","))
         }
-        return lines.joined(separator: "\n")
+        // CSV の標準に合わせて CRLF で区切る（Excel 等での取り込み用）。
+        return lines.joined(separator: "\r\n")
     }
 
     /// CSV を一時ファイルに書き出して URL を返す（共有用）。
     func makeCSVFile() -> URL? {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("kakeibo_\(Dates.today()).csv")
+        guard let body = exportCSV().data(using: .utf8) else { return nil }
+        // BOM を付けないと Excel（日本語環境）で文字化けする。
+        var data = Data([0xEF, 0xBB, 0xBF])
+        data.append(body)
         do {
-            try exportCSV().data(using: .utf8)?.write(to: url)
+            try data.write(to: url)
             return url
         } catch {
             return nil
