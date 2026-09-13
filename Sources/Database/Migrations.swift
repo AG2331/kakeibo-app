@@ -2,7 +2,7 @@ import Foundation
 
 extension Database {
     /// 現在のスキーマバージョン。変更時はインクリメントして差分DDLを足す。
-    static let schemaVersion: Int32 = 5
+    static let schemaVersion: Int32 = 6
 
     func migrateIfNeeded() throws {
         let current = userVersion()
@@ -23,6 +23,9 @@ extension Database {
         }
         if current < 5 {
             try applyV5()
+        }
+        if current < 6 {
+            try applyV6()
         }
         // 以降のバージョンはここに分岐を追加する。
 
@@ -149,6 +152,49 @@ extension Database {
     private func applyV5() throws {
         try migrate(5, "CREATE INDEX IF NOT EXISTS idx_tx_to_account ON transactions(to_account_id)")
     }
+
+    /// v6: よく使う小分類を用意する。取引は小分類まで選ぶ運用にしたため、
+    /// どの大分類にも最低ひとつは小分類がある状態にしておく。
+    /// すでに自分で小分類を作っている大分類には手を触れない。
+    private func applyV6() throws {
+        for group in Database.defaultSubcategories {
+            let parent = query(
+                "SELECT id, color FROM categories WHERE name=? AND type=? AND parent_id IS NULL",
+                [.text(group.parent), .text(group.type)]).first
+            // ユーザーが大分類を消していたら何もしない
+            guard let parentId = parent?.int64("id") else { continue }
+
+            let existing = query("SELECT COUNT(*) AS c FROM categories WHERE parent_id=?",
+                                 [.int(parentId)]).first?.int("c") ?? 0
+            guard existing == 0 else { continue }
+
+            for (index, child) in group.children.enumerated() {
+                try migrate(6,
+                    "INSERT INTO categories(name, type, parent_id, color, sort_order) VALUES(?,?,?,?,?)",
+                    [.text(child), .text(group.type), .int(parentId),
+                     SQLValue(parent?.int("color")), .int(Int64(index))])
+            }
+        }
+    }
+
+    /// 既定の小分類。親の名前で結び付ける。
+    private static let defaultSubcategories:
+        [(parent: String, type: String, children: [String])] = [
+        ("食費",   "expense", ["食料品", "外食", "カフェ・間食"]),
+        ("日用品", "expense", ["消耗品", "衣類", "家具・家電"]),
+        ("交通費", "expense", ["電車・バス", "タクシー", "ガソリン"]),
+        ("住居費", "expense", ["家賃・ローン", "管理費", "修繕"]),
+        ("光熱費", "expense", ["電気", "ガス", "水道"]),
+        ("通信費", "expense", ["携帯", "インターネット"]),
+        ("娯楽",   "expense", ["趣味", "旅行", "サブスク"]),
+        ("医療",   "expense", ["診察・薬", "保険"]),
+        ("交際費", "expense", ["飲み会", "プレゼント"]),
+        ("その他", "expense", ["その他"]),
+        ("給与",   "income",  ["給料", "手当"]),
+        ("賞与",   "income",  ["賞与"]),
+        ("副収入", "income",  ["副業", "臨時収入"]),
+        ("その他", "income",  ["その他"]),
+    ]
 
     /// デフォルトカテゴリ・現金口座・既定設定を投入する。
     private func seedDefaults() throws {

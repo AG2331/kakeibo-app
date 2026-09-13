@@ -81,7 +81,10 @@ final class AppStoreTests: XCTestCase {
     }
 
     func test_予算が設定されたカテゴリは削除を拒む() {
-        let category = store.allCategories.first { $0.name == "娯楽" }!
+        // 既定の大分類は小分類を持つので、そちらの理由が先に出てしまう。
+        // 予算のガードだけを見たいので、小分類のないカテゴリを用意する。
+        XCTAssertNil(store.saveCategory(Category(name: "予算テスト用", type: .expense)))
+        let category = store.allCategories.first { $0.name == "予算テスト用" }!
         XCTAssertNil(store.setBudget(categoryId: category.id, amount: 30_000))
 
         let reason = store.deleteCategory(category)

@@ -25,6 +25,8 @@ final class AppStore: ObservableObject {
     @Published var settings: AppSettings = .default
     @Published var recurringRules: [RecurringRule] = []
     @Published var creditCardStatements: [Int64: CreditCardStatementInfo] = [:]
+    /// 履歴タブのカレンダー用。選択中の月の日別内訳。
+    @Published var monthCalendar: [String: DayTotals] = [:]
 
     init(db: Database, dbPath: String) {
         self.db = db
@@ -79,6 +81,7 @@ final class AppStore: ObservableObject {
         creditCardStatements = Dictionary(uniqueKeysWithValues: accountList
             .filter { $0.hasStatementConfig }
             .compactMap { a in a.id.flatMap { id in creditCardStatement(for: a).map { (id, $0) } } })
+        monthCalendar = calendarTotals(of: selectedMonth)
     }
 
     func shiftMonth(by delta: Int) {
@@ -132,6 +135,23 @@ final class AppStore: ObservableObject {
     /// サブカテゴリの親候補（同じ種別の親カテゴリのみ。自分自身は除く）。
     func parentCategoryCandidates(type: TxType, excluding selfId: Int64?) -> [Category] {
         categories(of: type).filter { $0.parentId == nil && $0.id != selfId }
+    }
+
+    /// 大分類（親カテゴリ）の一覧。
+    func parentCategories(of type: TxType) -> [Category] {
+        categories(of: type).filter { $0.parentId == nil }
+    }
+
+    /// 指定した大分類に属する小分類。
+    func subcategories(of parentId: Int64) -> [Category] {
+        allCategories.filter { $0.parentId == parentId }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    /// 集計に使う大分類。小分類なら親を、親ならそれ自身を返す。
+    func rootCategory(of categoryId: Int64) -> Category? {
+        guard let category = categoriesById[categoryId] else { return nil }
+        guard let parentId = category.parentId else { return category }
+        return categoriesById[parentId] ?? category
     }
 
     /// 保存できなければ理由を返す（nil = 成功）。
@@ -319,13 +339,24 @@ final class AppStore: ObservableObject {
 
     // MARK: - 集計・レポート
 
+    /// カテゴリ別支出。小分類は大分類にまとめて数える（「食料品」「外食」→「食費」）。
     func expenseBreakdown() -> [CategorySlice] {
         let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
-        let map = transactions.expenseByCategory(start: start, end: end)
-        return map.compactMap { cid, amount in
-            categoriesById[cid].map { CategorySlice(category: $0, amount: amount) }
+        return expenseByRootCategory(start: start, end: end)
+            .compactMap { cid, amount in
+                categoriesById[cid].map { CategorySlice(category: $0, amount: amount) }
+            }
+            .sorted { $0.amount > $1.amount }
+    }
+
+    /// 期間内の支出を大分類ごとにまとめる。大分類のid -> 金額。
+    private func expenseByRootCategory(start: String, end: String) -> [Int64: Int] {
+        var result: [Int64: Int] = [:]
+        for (categoryId, amount) in transactions.expenseByCategory(start: start, end: end) {
+            guard let root = rootCategory(of: categoryId), let rootId = root.id else { continue }
+            result[rootId, default: 0] += amount
         }
-        .sorted { $0.amount > $1.amount }
+        return result
     }
 
     func monthlyTrend(months: Int = 6) -> [MonthBar] {
@@ -344,13 +375,46 @@ final class AppStore: ObservableObject {
         return transactions.summary(start: start, end: end)
     }
 
-    /// 日別の支出合計（カレンダー表示用）。"YYYY-MM-DD" -> 支出額。
-    func dailyExpense() -> [String: Int] {
-        var result: [String: Int] = [:]
-        for t in monthTransactions where t.type == .expense {
-            result[t.date, default: 0] += t.amount
+    /// 日別の収入・支出・振替（カレンダー表示用）。"YYYY-MM-DD" -> 内訳。
+    /// カレンダーは暦月で表示するため、月の開始日の設定に関わらず暦月で集計する。
+    func calendarTotals(of month: Date) -> [String: DayTotals] {
+        let (start, end) = Dates.monthRange(month, startDay: 1)
+        var result: [String: DayTotals] = [:]
+        for t in transactions.range(start: start, end: end) {
+            var totals = result[t.date] ?? DayTotals()
+            switch t.type {
+            case .income: totals.income += t.amount
+            case .expense: totals.expense += t.amount
+            case .transfer: totals.transfer += t.amount
+            }
+            result[t.date] = totals
         }
         return result
+    }
+
+    /// 指定日の取引（カレンダーの詳細表示用）。
+    func transactions(on day: String) -> [TxRecord] {
+        transactions.range(start: day, end: day)
+    }
+
+    // MARK: - 口座の詳細
+
+    /// 指定口座に関わる取引（出金元・振替先の両方）。新しい順。
+    func transactions(ofAccount id: Int64) -> [TxRecord] {
+        transactions.forAccount(id: id)
+    }
+
+    /// 口座の残高推移（各月末時点の残高。最後の点は現在の残高）。
+    func balanceTrend(accountId: Int64, months: Int = 6) -> [BalancePoint] {
+        (0..<months).reversed().map { offset in
+            let anchor = Dates.shiftMonth(selectedMonth, by: -offset)
+            let (_, end) = Dates.monthRange(anchor, startDay: 1)
+            // 未来の月はまだ確定していないので、今日までの残高を使う
+            let asOf = min(end, Dates.today())
+            return BalancePoint(month: anchor,
+                                label: Dates.shortMonthLabel(anchor),
+                                balance: accounts.balance(id: accountId, asOf: asOf))
+        }
     }
 
     // MARK: - 予算管理
@@ -360,7 +424,8 @@ final class AppStore: ObservableObject {
         let ym = currentYearMonth
         let all = budgets.forMonth(ym)
         let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
-        let spentByCat = transactions.expenseByCategory(start: start, end: end)
+        // 予算は大分類ごとに立てるので、小分類の支出も親にまとめて数える
+        let spentByCat = expenseByRootCategory(start: start, end: end)
 
         let overall = all.first { $0.categoryId == nil }.map {
             BudgetProgress(categoryId: nil, name: "全体", color: nil,

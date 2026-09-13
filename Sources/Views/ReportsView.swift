@@ -8,7 +8,6 @@ struct ReportsView: View {
     @State private var slices: [CategorySlice] = []
     @State private var trend: [MonthBar] = []
     @State private var previous: MonthlySummary = .empty
-    @State private var daily: [String: Int] = [:]
 
     private var totalExpense: Int { slices.reduce(0) { $0 + $1.amount } }
 
@@ -41,7 +40,6 @@ struct ReportsView: View {
                     comparisonCard
                     categorySection
                     trendSection
-                    calendarSection
                 }
                 .padding()
             }
@@ -73,7 +71,6 @@ struct ReportsView: View {
         slices = store.expenseBreakdown()
         trend = store.monthlyTrend(months: 6)
         previous = store.previousSummary()
-        daily = store.dailyExpense()
     }
 
     // MARK: - 前月比サマリ
@@ -189,17 +186,6 @@ struct ReportsView: View {
             }
             .chartForegroundStyleScale(["収入": TxPalette.income, "支出": TxPalette.expense])
             .frame(height: 220)
-        }
-        .padding()
-        .background(.background, in: RoundedRectangle(cornerRadius: 16))
-    }
-
-    // MARK: - カレンダー
-
-    private var calendarSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("日別の支出カレンダー").font(.headline)
-            CalendarMonthView(month: store.selectedMonth, dailyExpense: daily)
         }
         .padding()
         .background(.background, in: RoundedRectangle(cornerRadius: 16))

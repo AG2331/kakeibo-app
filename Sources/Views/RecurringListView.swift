@@ -97,10 +97,6 @@ struct RecurringEditView: View {
         _endDate = State(initialValue: existing?.endDate.map(Dates.parse) ?? Date())
     }
 
-    private var categoryOptions: [(category: Category, depth: Int)] {
-        store.orderedCategories(of: type)
-    }
-
     var body: some View {
         NavigationStack {
             Form {
@@ -138,13 +134,7 @@ struct RecurringEditView: View {
                     }
                 } else {
                     Section {
-                        Picker("カテゴリ", selection: $categoryId) {
-                            Text("選択してください").tag(Int64?.none)
-                            ForEach(categoryOptions, id: \.category.id) { entry in
-                                Text(entry.depth == 0 ? entry.category.name : "　└ \(entry.category.name)")
-                                    .tag(Int64?.some(entry.category.id ?? 0))
-                            }
-                        }
+                        CategoryPickerField(type: type, selection: $categoryId)
                         AccountPickerField(title: "口座", selection: $accountId)
                     }
                 }
@@ -173,7 +163,12 @@ struct RecurringEditView: View {
             guard let to = toAccountId, to != account else {
                 message = "振替先に別の口座を選択してください"; return
             }
-        } else if categoryId == nil {
+        } else if let categoryId {
+            if store.categoriesById[categoryId]?.parentId == nil,
+               !store.subcategories(of: categoryId).isEmpty {
+                message = "小分類まで選択してください"; return
+            }
+        } else {
             message = "カテゴリを選択してください"; return
         }
 

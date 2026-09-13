@@ -4,7 +4,6 @@ import SwiftUI
 /// 親口座（実口座）はその総額を、仮想口座（サブ口座）は内訳として表示する。
 struct AccountsOverviewView: View {
     @EnvironmentObject private var store: AppStore
-    @State private var editing: Account?
     @State private var creating = false
     @State private var deleteError: String?
     @State private var collapsed: Set<Int64> = []
@@ -39,12 +38,11 @@ struct AccountsOverviewView: View {
                                 breakdownRow(name: "（振分なし）", balance: node.ownBalance, isOwn: true)
                             }
                             ForEach(node.children, id: \.account.id) { child in
-                                Button {
-                                    editing = child.account
+                                NavigationLink {
+                                    detail(for: child.account)
                                 } label: {
                                     breakdownRow(name: child.account.name, balance: child.balance, isOwn: false)
                                 }
-                                .buttonStyle(.plain)
                                 .swipeActions(edge: .trailing) { deleteButton(child.account) }
                                 if let info = store.creditCardStatements[child.account.id ?? -1] {
                                     creditStatementRow(info)
@@ -83,9 +81,6 @@ struct AccountsOverviewView: View {
                     }
                 }
             }
-            .sheet(item: $editing) { account in
-                AccountEditView(existing: account)
-            }
             .sheet(isPresented: $creating) {
                 AccountEditView(existing: nil)
             }
@@ -101,6 +96,13 @@ struct AccountsOverviewView: View {
                 ))
             }
             .errorAlert("削除できません", message: $deleteError)
+        }
+    }
+
+    @ViewBuilder
+    private func detail(for account: Account) -> some View {
+        if let id = account.id {
+            AccountDetailView(accountId: id)
         }
     }
 
@@ -125,8 +127,7 @@ struct AccountsOverviewView: View {
             } else {
                 Spacer().frame(width: 22)
             }
-            Button { editing = node.account } label: { parentRow(node) }
-                .buttonStyle(.plain)
+            NavigationLink { detail(for: node.account) } label: { parentRow(node) }
         }
         .swipeActions(edge: .trailing) { deleteButton(node.account) }
     }
