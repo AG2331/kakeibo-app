@@ -1,6 +1,6 @@
 name: Kakeibo
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: com.util
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -22,7 +22,7 @@ targets:
       - path: Sources
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.kakeibo
+        PRODUCT_BUNDLE_IDENTIFIER: com.util.kakeibo
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_CFBundleDisplayName: 家計簿
         INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
@@ -31,12 +31,29 @@ targets:
     dependencies:
       - sdk: libsqlite3.tbd
 
+  KakeiboTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: Kakeibo
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.util.kakeibo.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+
 schemes:
   Kakeibo:
     build:
       targets:
         Kakeibo: all
+        KakeiboTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - KakeiboTests
     archive:
       config: Release
