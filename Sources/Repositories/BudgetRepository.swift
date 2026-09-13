@@ -35,6 +35,12 @@ struct BudgetRepository {
         }
     }
 
+    /// 指定カテゴリに予算が設定されている月数。
+    func countByCategory(id: Int64) -> Int {
+        db.query("SELECT COUNT(*) AS c FROM budgets WHERE category_id = ?", [.int(id)])
+            .first?.int("c") ?? 0
+    }
+
     func delete(yearMonth: String, categoryId: Int64?) {
         db.run("DELETE FROM budgets WHERE year_month = ? AND " +
                (categoryId == nil ? "category_id IS NULL" : "category_id = ?"),

@@ -6,7 +6,7 @@ struct AccountsOverviewView: View {
     @EnvironmentObject private var store: AppStore
     @State private var editing: Account?
     @State private var creating = false
-    @State private var deleteError = false
+    @State private var deleteError: String?
     @State private var collapsed: Set<Int64> = []
     @State private var settlementDraft: CreditCardStatementInfo?
 
@@ -100,17 +100,17 @@ struct AccountsOverviewView: View {
                     memo: "カード引き落とし"
                 ))
             }
-            .alert("削除できません", isPresented: $deleteError) {
-                Button("OK", role: .cancel) {}
+            .alert("削除できません", isPresented: .constant(deleteError != nil)) {
+                Button("OK") { deleteError = nil }
             } message: {
-                Text("この口座は取引で使われているか、仮想口座を持っています。先にそれらを変更・削除してください。")
+                Text(deleteError ?? "")
             }
         }
     }
 
     private func deleteButton(_ account: Account) -> some View {
         Button(role: .destructive) {
-            if !store.deleteAccount(account) { deleteError = true }
+            deleteError = store.deleteAccount(account)
         } label: {
             Label("削除", systemImage: "trash")
         }

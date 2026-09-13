@@ -19,7 +19,7 @@ struct RecurringRepository {
             [.text(r.type.rawValue), .int(Int64(r.amount)), SQLValue(r.categoryId),
              .int(r.accountId), SQLValue(r.toAccountId), SQLValue(r.memo),
              .text(r.frequency.rawValue), .int(Int64(r.interval)),
-             .text(r.nextDate), SQLValue(r.endDate)])
+             .text(r.nextDate), SQLValue(r.endDate)]).rowId
     }
 
     func update(_ r: RecurringRule) {
@@ -39,8 +39,21 @@ struct RecurringRepository {
         db.run("UPDATE recurring_rules SET next_date = ? WHERE id = ?", [.text(nextDate), .int(id)])
     }
 
-    func delete(id: Int64) {
-        db.run("DELETE FROM recurring_rules WHERE id = ?", [.int(id)])
+    @discardableResult
+    func delete(id: Int64) -> Bool {
+        db.run("DELETE FROM recurring_rules WHERE id = ?", [.int(id)]).ok
+    }
+
+    /// 指定口座を使っている定期取引の表示名（メモ、無ければ「定期取引」）。
+    func usingAccount(id: Int64) -> [String] {
+        db.query("SELECT memo FROM recurring_rules WHERE account_id=? OR to_account_id=?",
+                 [.int(id), .int(id)]).map { $0.string("memo") ?? "定期取引" }
+    }
+
+    /// 指定カテゴリを使っている定期取引の表示名。
+    func usingCategory(id: Int64) -> [String] {
+        db.query("SELECT memo FROM recurring_rules WHERE category_id=?", [.int(id)])
+            .map { $0.string("memo") ?? "定期取引" }
     }
 
     static func map(_ r: Row) -> RecurringRule {

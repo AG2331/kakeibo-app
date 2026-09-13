@@ -129,14 +129,33 @@ final class AppStore: ObservableObject {
         reload()
     }
 
+    /// 削除できなければ理由を返す（nil = 削除成功）。
     @discardableResult
-    func deleteCategory(_ category: Category) -> Bool {
-        guard let id = category.id else { return false }
-        if transactions.countByCategory(id: id) > 0 { return false }
-        if categories.childCount(id: id) > 0 { return false } // サブカテゴリを持つ親は削除不可
-        categories.delete(id: id)
+    func deleteCategory(_ category: Category) -> String? {
+        guard let id = category.id else { return "このカテゴリは保存されていません。" }
+
+        let txCount = transactions.countByCategory(id: id)
+        if txCount > 0 {
+            return "このカテゴリは取引 \(txCount) 件で使われています。先に取引のカテゴリを変更するか、取引を削除してください。"
+        }
+        let children = categories.childNames(id: id)
+        if !children.isEmpty {
+            return "このカテゴリにはサブカテゴリ（\(Self.listed(children))）があります。先にサブカテゴリを削除してください。"
+        }
+        let rules = recurring.usingCategory(id: id)
+        if !rules.isEmpty {
+            return "このカテゴリは定期取引（\(Self.listed(rules))）で使われています。先に定期取引を変更・削除してください。"
+        }
+        let budgetMonths = budgets.countByCategory(id: id)
+        if budgetMonths > 0 {
+            return "このカテゴリには予算が \(budgetMonths) か月分設定されています。先に予算を 0 にしてください。"
+        }
+
+        guard categories.delete(id: id) else {
+            return "削除できませんでした。他のデータから参照されている可能性があります。"
+        }
         reload()
-        return true
+        return nil
     }
 
     // MARK: - 口座管理
@@ -152,14 +171,40 @@ final class AppStore: ObservableObject {
         reload()
     }
 
+    /// 削除できなければ理由を返す（nil = 削除成功）。
     @discardableResult
-    func deleteAccount(_ account: Account) -> Bool {
-        guard let id = account.id else { return false }
-        if transactions.countByAccount(id: id) > 0 { return false }
-        if accounts.childCount(id: id) > 0 { return false } // 仮想口座を持つ親は削除不可
-        accounts.delete(id: id)
+    func deleteAccount(_ account: Account) -> String? {
+        guard let id = account.id else { return "この口座は保存されていません。" }
+
+        let txCount = transactions.countByAccount(id: id)
+        if txCount > 0 {
+            return "この口座は取引 \(txCount) 件で使われています。先に取引の口座を変更するか、取引を削除してください。"
+        }
+        let children = accounts.childNames(id: id)
+        if !children.isEmpty {
+            return "この口座には仮想口座（\(Self.listed(children))）があります。先に仮想口座を削除してください。"
+        }
+        let cards = accounts.paymentSourceOf(id: id)
+        if !cards.isEmpty {
+            return "この口座は「\(Self.listed(cards))」の引き落とし元に設定されています。先にカード側の設定を変更してください。"
+        }
+        let rules = recurring.usingAccount(id: id)
+        if !rules.isEmpty {
+            return "この口座は定期取引（\(Self.listed(rules))）で使われています。先に定期取引を変更・削除してください。"
+        }
+
+        guard accounts.delete(id: id) else {
+            return "削除できませんでした。他のデータから参照されている可能性があります。"
+        }
         reload()
-        return true
+        return nil
+    }
+
+    /// 名前の一覧を「A、B ほか2件」の形にまとめる。
+    private static func listed(_ names: [String], limit: Int = 2) -> String {
+        let head = names.prefix(limit).joined(separator: "、")
+        let rest = names.count - min(limit, names.count)
+        return rest > 0 ? "\(head) ほか\(rest)件" : head
     }
 
     /// 取引登録用に、親口座→その仮想口座の順で並べた口座リスト（depth: 0=親, 1=仮想）。
@@ -370,24 +415,65 @@ final class AppStore: ObservableObject {
     var backupFileURL: URL { URL(fileURLWithPath: dbPath) }
 
     /// 選択した DB ファイルで現在の DB を置き換える。
-    @discardableResult
-    func restore(from url: URL) -> Bool {
+    /// 検証を通過するまで現在の DB には一切触れず、差し替えに失敗したら元に戻す。
+    func restore(from url: URL) -> RestoreResult {
         let needsScope = url.startAccessingSecurityScopedResource()
         defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
 
-        db.closeConnection()
         let fm = FileManager.default
+        let candidate = fm.temporaryDirectory
+            .appendingPathComponent("restore_\(UUID().uuidString).sqlite")
+        defer { try? fm.removeItem(at: candidate) }
+
+        // 1. 一時ファイルへ取り込む（ここまでは現在の DB は無傷）
         do {
-            if fm.fileExists(atPath: dbPath) { try fm.removeItem(atPath: dbPath) }
-            try fm.copyItem(at: url, to: URL(fileURLWithPath: dbPath))
-            db = try Database(path: dbPath)
+            try fm.copyItem(at: url, to: candidate)
+        } catch {
+            return .failed(error.localizedDescription)
+        }
+
+        // 2. 中身を検証する。NG ならここで終わり、現在のデータは残る。
+        switch Database.inspectBackup(at: candidate.path) {
+        case .ok: break
+        case .notADatabase: return .invalidFile
+        case .notKakeiboBackup: return .notKakeiboBackup
+        case .newerSchema: return .newerSchema
+        }
+
+        // 3. 検証済みファイルと差し替える。元の DB はロールバック用に退避しておく。
+        db.closeConnection()
+        let dbURL = URL(fileURLWithPath: dbPath)
+        let rollback = fm.temporaryDirectory
+            .appendingPathComponent("rollback_\(UUID().uuidString).sqlite")
+        var rolledAside = false
+        do {
+            if fm.fileExists(atPath: dbPath) {
+                try fm.moveItem(at: dbURL, to: rollback)
+                rolledAside = true
+            }
+            removeSidecarFiles()
+            try fm.copyItem(at: candidate, to: dbURL)
+            db = try Database(path: dbPath)   // ここで必要ならマイグレーションも走る
+            if rolledAside { try? fm.removeItem(at: rollback) }
             loadSettings()
             reload()
-            return true
+            return .success
         } catch {
-            // 失敗時は元の場所で開き直す
+            // 差し替えに失敗したら元の DB を書き戻す
+            try? fm.removeItem(at: dbURL)
+            if rolledAside { try? fm.moveItem(at: rollback, to: dbURL) }
             db = (try? Database(path: dbPath)) ?? db
-            return false
+            loadSettings()
+            reload()
+            return .failed(error.localizedDescription)
+        }
+    }
+
+    /// DB 差し替え時に取り残される WAL / ジャーナルを掃除する。
+    private func removeSidecarFiles() {
+        let fm = FileManager.default
+        for suffix in ["-wal", "-shm", "-journal"] {
+            try? fm.removeItem(atPath: dbPath + suffix)
         }
     }
 

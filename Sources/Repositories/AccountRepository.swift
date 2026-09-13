@@ -22,7 +22,7 @@ struct AccountRepository {
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
              .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId),
              SQLValue(a.closingDay), SQLValue(a.paymentDay), .int(Int64(a.paymentMonthOffset)),
-             SQLValue(a.paymentAccountId)])
+             SQLValue(a.paymentAccountId)]).rowId
     }
 
     func update(_ a: Account) {
@@ -40,14 +40,28 @@ struct AccountRepository {
              SQLValue(a.paymentAccountId), .int(id)])
     }
 
-    func delete(id: Int64) {
-        db.run("DELETE FROM accounts WHERE id=?", [.int(id)])
+    /// 削除できたかを返す。他から参照されている場合は false。
+    @discardableResult
+    func delete(id: Int64) -> Bool {
+        db.run("DELETE FROM accounts WHERE id=?", [.int(id)]).ok
+    }
+
+    /// 指定口座の子（仮想口座）名。
+    func childNames(id: Int64) -> [String] {
+        db.query("SELECT name FROM accounts WHERE parent_id=? ORDER BY sort_order, id",
+                 [.int(id)]).compactMap { $0.string("name") }
     }
 
     /// 指定口座の子（仮想口座）数。
     func childCount(id: Int64) -> Int {
         db.query("SELECT COUNT(*) AS c FROM accounts WHERE parent_id=?", [.int(id)])
             .first?.int("c") ?? 0
+    }
+
+    /// 指定口座を引き落とし元に設定しているクレジット口座名。
+    func paymentSourceOf(id: Int64) -> [String] {
+        db.query("SELECT name FROM accounts WHERE payment_account_id=? ORDER BY sort_order, id",
+                 [.int(id)]).compactMap { $0.string("name") }
     }
 
     /// 現在残高 = 初期残高 + 入金/振替先 - 出金/振替元。

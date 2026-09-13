@@ -38,7 +38,7 @@ struct TransactionRepository {
             """,
             [.text(t.type.rawValue), .int(Int64(t.amount)), .text(t.date),
              SQLValue(t.categoryId), .int(t.accountId), SQLValue(t.toAccountId),
-             SQLValue(t.memo), .int(t.createdAt)])
+             SQLValue(t.memo), .int(t.createdAt)]).rowId
     }
 
     func update(_ t: TxRecord) {

@@ -5,7 +5,7 @@ struct CategoryListView: View {
     @EnvironmentObject private var store: AppStore
     @State private var editing: Category?
     @State private var creatingType: TxType?
-    @State private var deleteError = false
+    @State private var deleteError: String?
     @State private var collapsed: Set<Int64> = []
 
     var body: some View {
@@ -40,10 +40,10 @@ struct CategoryListView: View {
         .sheet(item: $creatingType) { type in
             CategoryEditView(existing: nil, type: type)
         }
-        .alert("削除できません", isPresented: $deleteError) {
-            Button("OK", role: .cancel) {}
+        .alert("削除できません", isPresented: .constant(deleteError != nil)) {
+            Button("OK") { deleteError = nil }
         } message: {
-            Text("このカテゴリは取引で使われているか、サブカテゴリを持っています。先にそれらを変更・削除してください。")
+            Text(deleteError ?? "")
         }
     }
 
@@ -88,7 +88,7 @@ struct CategoryListView: View {
 
     private func deleteButton(_ category: Category) -> some View {
         Button(role: .destructive) {
-            if !store.deleteCategory(category) { deleteError = true }
+            deleteError = store.deleteCategory(category)
         } label: {
             Label("削除", systemImage: "trash")
         }
