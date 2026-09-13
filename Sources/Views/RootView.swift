@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// アプリのルート。ホーム / レポート / 設定 のタブ構成。
+/// アプリのルート。ホーム / レポート / 口座 / 設定 のタブ構成。
 struct RootView: View {
+    @EnvironmentObject private var store: AppStore
+
     var body: some View {
         TabView {
             HomeView()
@@ -18,5 +20,7 @@ struct RootView: View {
             }
             .tabItem { Label("設定", systemImage: "gearshape") }
         }
+        .tint(TxPalette.accent)
+        .preferredColorScheme(store.settings.theme.colorScheme)
     }
 }

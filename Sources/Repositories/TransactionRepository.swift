@@ -30,7 +30,7 @@ struct TransactionRepository {
     }
 
     @discardableResult
-    func insert(_ t: TxRecord) -> Int64 {
+    func insert(_ t: TxRecord) -> Bool {
         db.run(
             """
             INSERT INTO transactions(type, amount, date, category_id, account_id, to_account_id, memo, created_at)
@@ -38,23 +38,25 @@ struct TransactionRepository {
             """,
             [.text(t.type.rawValue), .int(Int64(t.amount)), .text(t.date),
              SQLValue(t.categoryId), .int(t.accountId), SQLValue(t.toAccountId),
-             SQLValue(t.memo), .int(t.createdAt)])
+             SQLValue(t.memo), .int(t.createdAt)]).ok
     }
 
-    func update(_ t: TxRecord) {
-        guard let id = t.id else { return }
-        db.run(
+    @discardableResult
+    func update(_ t: TxRecord) -> Bool {
+        guard let id = t.id else { return false }
+        return db.run(
             """
             UPDATE transactions SET type=?, amount=?, date=?, category_id=?, account_id=?, to_account_id=?, memo=?
             WHERE id=?
             """,
             [.text(t.type.rawValue), .int(Int64(t.amount)), .text(t.date),
              SQLValue(t.categoryId), .int(t.accountId), SQLValue(t.toAccountId),
-             SQLValue(t.memo), .int(id)])
+             SQLValue(t.memo), .int(id)]).ok
     }
 
-    func delete(id: Int64) {
-        db.run("DELETE FROM transactions WHERE id=?", [.int(id)])
+    @discardableResult
+    func delete(id: Int64) -> Bool {
+        db.run("DELETE FROM transactions WHERE id=?", [.int(id)]).ok
     }
 
     /// [start, end] の収入・支出合計。
@@ -95,13 +97,26 @@ struct TransactionRepository {
             .first?.int("c") ?? 0
     }
 
-    /// 指定口座・期間内の支出合計（クレカ請求額の算出用）。
-    func expenseSum(accountId: Int64, start: String, end: String) -> Int {
+    /// 指定口座・期間内の正味利用額（支出 − 収入）。クレカ請求額の算出用。
+    /// カードへの返金を「収入」で記録した場合に請求額から差し引かれる。
+    func netUsage(accountId: Int64, start: String, end: String) -> Int {
+        db.query(
+            """
+            SELECT COALESCE(SUM(CASE WHEN type='expense' THEN amount END),0)
+                 - COALESCE(SUM(CASE WHEN type='income' THEN amount END),0) AS s
+            FROM transactions
+            WHERE account_id=? AND date >= ? AND date <= ? AND type IN ('expense','income')
+            """, [.int(accountId), .text(start), .text(end)]
+        ).first?.int("s") ?? 0
+    }
+
+    /// 指定日より後に、その口座へ入ってきた振替の合計（クレカの支払済額の算出用）。
+    func transferInSum(accountId: Int64, since: String) -> Int {
         db.query(
             """
             SELECT COALESCE(SUM(amount),0) AS s FROM transactions
-            WHERE type='expense' AND account_id=? AND date >= ? AND date <= ?
-            """, [.int(accountId), .text(start), .text(end)]
+            WHERE type='transfer' AND to_account_id=? AND date > ?
+            """, [.int(accountId), .text(since)]
         ).first?.int("s") ?? 0
     }
 

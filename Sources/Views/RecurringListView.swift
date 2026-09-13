@@ -5,6 +5,7 @@ struct RecurringListView: View {
     @EnvironmentObject private var store: AppStore
     @State private var editing: RecurringRule?
     @State private var creating = false
+    @State private var deleteError: String?
 
     var body: some View {
         List {
@@ -20,10 +21,13 @@ struct RecurringListView: View {
                         .buttonStyle(.plain)
                 }
                 .onDelete { offsets in
-                    offsets.map { store.recurringRules[$0] }.forEach(store.deleteRecurring)
+                    for rule in offsets.map({ store.recurringRules[$0] }) {
+                        if let error = store.deleteRecurring(rule) { deleteError = error; break }
+                    }
                 }
             }
         }
+        .errorAlert("削除できません", message: $deleteError)
         .navigationTitle("定期取引")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -39,11 +43,16 @@ struct RecurringListView: View {
         let cat = rule.categoryId.flatMap { store.categoriesById[$0] }
         let color = rule.type == .income ? TxPalette.income
             : (rule.type == .transfer ? TxPalette.transfer : TxPalette.expense)
+        // メモ（家賃・サブスク名など）があればそれを見出しにする方が見分けやすい。
+        let fallback = rule.type == .transfer ? "振替" : (cat?.name ?? rule.type.label)
+        let title = rule.memo?.trimmingCharacters(in: .whitespaces).isEmpty == false
+            ? rule.memo! : fallback
+        let subtitle = title == fallback ? "" : "\(fallback) ・ "
         return HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(rule.type == .transfer ? "振替" : (cat?.name ?? rule.type.label))
+                Text(title)
                     .font(.body)
-                Text("\(rule.frequency.label) ・ 次回 \(rule.nextDate)")
+                Text("\(subtitle)\(rule.frequency.label) ・ 次回 \(rule.nextDate)")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
@@ -181,7 +190,7 @@ struct RecurringEditView: View {
             nextDate: Dates.ymd(nextDate),
             endDate: hasEnd ? Dates.ymd(endDate) : nil
         )
-        store.saveRecurring(rule)
+        if let error = store.saveRecurring(rule) { message = error; return }
         dismiss()
     }
 }

@@ -34,6 +34,19 @@ enum CreditCardCycle {
         return (Dates.ymd(periodStart), Dates.ymd(closeDate))
     }
 
+    /// asOf 時点でまだ締まっていない期間 [開始日, 締め予定日] を返す。
+    /// 直近の締め日の翌日から、次の締め日まで。
+    static func openPeriod(
+        closingDay: Int, asOf: Date = Date(), calendar: Calendar = .current
+    ) -> (start: String, end: String) {
+        let lastEnd = Dates.parse(lastClosedPeriod(closingDay: closingDay, asOf: asOf,
+                                                   calendar: calendar).end)
+        let start = calendar.date(byAdding: .day, value: 1, to: lastEnd)!
+        let nextAnchor = calendar.date(byAdding: .month, value: 1, to: lastEnd)!
+        let end = resolveDay(closingDay, in: nextAnchor, calendar: calendar)
+        return (Dates.ymd(start), Dates.ymd(end))
+    }
+
     /// 締め日(periodEnd, YYYY-MM-DD)に対応する支払日（YYYY-MM-DD）を返す。
     static func paymentDate(
         periodEnd: String, paymentDay: Int, monthOffset: Int, calendar: Calendar = .current

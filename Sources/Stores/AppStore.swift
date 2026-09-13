@@ -36,14 +36,19 @@ final class AppStore: ObservableObject {
         reload()
     }
 
+    /// 既定の DB ファイルの場所。
+    static func defaultDatabasePath() throws -> String {
+        let dir = try FileManager.default.url(for: .applicationSupportDirectory,
+                                              in: .userDomainMask,
+                                              appropriateFor: nil, create: true)
+        return dir.appendingPathComponent("kakeibo.sqlite").path
+    }
+
     /// アプリのドキュメント配下に DB を作って開く。
-    static func makeDefault() -> AppStore {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory,
-                                           in: .userDomainMask).first!
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let path = dir.appendingPathComponent("kakeibo.sqlite").path
-        // swiftlint:disable:next force_try
-        let db = try! Database(path: path)
+    /// 開けない場合は投げる（握り潰すと空のデータで起動してしまうため）。
+    static func makeDefault() throws -> AppStore {
+        let path = try defaultDatabasePath()
+        let db = try Database(path: path)
         return AppStore(db: db, dbPath: path)
     }
 
@@ -83,16 +88,27 @@ final class AppStore: ObservableObject {
 
     // MARK: - 取引
 
-    func save(_ record: TxRecord) {
-        if record.id == nil { transactions.insert(record) } else { transactions.update(record) }
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func save(_ record: TxRecord) -> String? {
+        let ok = record.id == nil ? transactions.insert(record) : transactions.update(record)
+        guard ok else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
-    func delete(_ record: TxRecord) {
-        guard let id = record.id else { return }
-        transactions.delete(id: id)
+    /// 削除できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func delete(_ record: TxRecord) -> String? {
+        guard let id = record.id else { return "この取引は保存されていません。" }
+        guard transactions.delete(id: id) else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
+
+    /// 書き込みに失敗したときの共通メッセージ。
+    static let writeFailureMessage =
+        "保存できませんでした。端末の空き容量を確認して、もう一度お試しください。"
 
     // MARK: - カテゴリ管理
 
@@ -118,48 +134,103 @@ final class AppStore: ObservableObject {
         categories(of: type).filter { $0.parentId == nil && $0.id != selfId }
     }
 
-    func saveCategory(_ category: Category) {
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func saveCategory(_ category: Category) -> String? {
+        let ok: Bool
         if category.id == nil {
             var c = category
             c.sortOrder = (categories(of: category.type).map(\.sortOrder).max() ?? -1) + 1
-            categories.insert(c)
+            ok = categories.insert(c)
         } else {
-            categories.update(category)
+            ok = categories.update(category)
         }
+        guard ok else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
+    /// 削除できなければ理由を返す（nil = 削除成功）。
     @discardableResult
-    func deleteCategory(_ category: Category) -> Bool {
-        guard let id = category.id else { return false }
-        if transactions.countByCategory(id: id) > 0 { return false }
-        if categories.childCount(id: id) > 0 { return false } // サブカテゴリを持つ親は削除不可
-        categories.delete(id: id)
+    func deleteCategory(_ category: Category) -> String? {
+        guard let id = category.id else { return "このカテゴリは保存されていません。" }
+
+        let txCount = transactions.countByCategory(id: id)
+        if txCount > 0 {
+            return "このカテゴリは取引 \(txCount) 件で使われています。先に取引のカテゴリを変更するか、取引を削除してください。"
+        }
+        let children = categories.childNames(id: id)
+        if !children.isEmpty {
+            return "このカテゴリにはサブカテゴリ（\(Self.listed(children))）があります。先にサブカテゴリを削除してください。"
+        }
+        let rules = recurring.usingCategory(id: id)
+        if !rules.isEmpty {
+            return "このカテゴリは定期取引（\(Self.listed(rules))）で使われています。先に定期取引を変更・削除してください。"
+        }
+        let budgetMonths = budgets.countByCategory(id: id)
+        if budgetMonths > 0 {
+            return "このカテゴリには予算が \(budgetMonths) か月分設定されています。先に予算を 0 にしてください。"
+        }
+
+        guard categories.delete(id: id) else {
+            return "削除できませんでした。他のデータから参照されている可能性があります。"
+        }
         reload()
-        return true
+        return nil
     }
 
     // MARK: - 口座管理
 
-    func saveAccount(_ account: Account) {
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func saveAccount(_ account: Account) -> String? {
+        let ok: Bool
         if account.id == nil {
             var a = account
             a.sortOrder = (accountList.map(\.sortOrder).max() ?? -1) + 1
-            accounts.insert(a)
+            ok = accounts.insert(a)
         } else {
-            accounts.update(account)
+            ok = accounts.update(account)
         }
+        guard ok else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
+    /// 削除できなければ理由を返す（nil = 削除成功）。
     @discardableResult
-    func deleteAccount(_ account: Account) -> Bool {
-        guard let id = account.id else { return false }
-        if transactions.countByAccount(id: id) > 0 { return false }
-        if accounts.childCount(id: id) > 0 { return false } // 仮想口座を持つ親は削除不可
-        accounts.delete(id: id)
+    func deleteAccount(_ account: Account) -> String? {
+        guard let id = account.id else { return "この口座は保存されていません。" }
+
+        let txCount = transactions.countByAccount(id: id)
+        if txCount > 0 {
+            return "この口座は取引 \(txCount) 件で使われています。先に取引の口座を変更するか、取引を削除してください。"
+        }
+        let children = accounts.childNames(id: id)
+        if !children.isEmpty {
+            return "この口座には仮想口座（\(Self.listed(children))）があります。先に仮想口座を削除してください。"
+        }
+        let cards = accounts.paymentSourceOf(id: id)
+        if !cards.isEmpty {
+            return "この口座は「\(Self.listed(cards))」の引き落とし元に設定されています。先にカード側の設定を変更してください。"
+        }
+        let rules = recurring.usingAccount(id: id)
+        if !rules.isEmpty {
+            return "この口座は定期取引（\(Self.listed(rules))）で使われています。先に定期取引を変更・削除してください。"
+        }
+
+        guard accounts.delete(id: id) else {
+            return "削除できませんでした。他のデータから参照されている可能性があります。"
+        }
         reload()
-        return true
+        return nil
+    }
+
+    /// 名前の一覧を「A、B ほか2件」の形にまとめる。
+    private static func listed(_ names: [String], limit: Int = 2) -> String {
+        let head = names.prefix(limit).joined(separator: "、")
+        let rest = names.count - min(limit, names.count)
+        return rest > 0 ? "\(head) ほか\(rest)件" : head
     }
 
     /// 取引登録用に、親口座→その仮想口座の順で並べた口座リスト（depth: 0=親, 1=仮想）。
@@ -194,18 +265,35 @@ final class AppStore: ObservableObject {
         return (grand, nodes)
     }
 
-    /// クレジット口座の締め日・支払日設定から、未精算額・次回請求予定を計算する。
+    /// クレジット口座の締め日・支払日設定から、未精算額・請求状況を計算する。
+    /// 締め日以降にカード口座へ入った振替を「支払い済み」とみなすため、
+    /// 引き落としを記録すると請求額は自動的に消える。
     func creditCardStatement(for account: Account) -> CreditCardStatementInfo? {
         guard account.hasStatementConfig, let id = account.id,
               let closingDay = account.closingDay, let paymentDay = account.paymentDay else { return nil }
+
+        // 直近で締まった請求
         let (start, end) = CreditCardCycle.lastClosedPeriod(closingDay: closingDay)
-        let due = CreditCardCycle.paymentDate(periodEnd: end, paymentDay: paymentDay,
-                                              monthOffset: account.paymentMonthOffset)
-        let suggested = transactions.expenseSum(accountId: id, start: start, end: end)
-        let outstanding = max(0, -(accountBalances[id] ?? 0))
-        return CreditCardStatementInfo(accountId: id, periodStart: start, periodEnd: end,
-                                       outstandingAmount: outstanding, nextPaymentDate: due,
-                                       suggestedAmount: suggested)
+        let billed = max(0, transactions.netUsage(accountId: id, start: start, end: end))
+        let paid = transactions.transferInSum(accountId: id, since: end)
+        let due = max(0, billed - paid)
+        let dueDate = CreditCardCycle.paymentDate(periodEnd: end, paymentDay: paymentDay,
+                                                  monthOffset: account.paymentMonthOffset)
+
+        // まだ締まっていない進行中サイクル
+        let (openStart, openEnd) = CreditCardCycle.openPeriod(closingDay: closingDay)
+        let upcoming = max(0, transactions.netUsage(accountId: id, start: openStart, end: openEnd))
+        let upcomingDue = CreditCardCycle.paymentDate(periodEnd: openEnd, paymentDay: paymentDay,
+                                                      monthOffset: account.paymentMonthOffset)
+
+        return CreditCardStatementInfo(
+            accountId: id,
+            outstandingAmount: max(0, -(accountBalances[id] ?? 0)),
+            dueAmount: due,
+            dueDate: dueDate,
+            isOverdue: due > 0 && dueDate < Dates.today(),
+            upcomingAmount: upcoming,
+            upcomingDueDate: upcomingDue)
     }
 
     // MARK: - 設定
@@ -296,23 +384,34 @@ final class AppStore: ObservableObject {
             .first { $0.categoryId == categoryId }?.amount ?? 0
     }
 
-    func setBudget(categoryId: Int64?, amount: Int) {
-        budgets.set(yearMonth: currentYearMonth, categoryId: categoryId, amount: amount)
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func setBudget(categoryId: Int64?, amount: Int) -> String? {
+        guard budgets.set(yearMonth: currentYearMonth, categoryId: categoryId,
+                          amount: amount) else { return Self.writeFailureMessage }
         objectWillChange.send()
+        return nil
     }
 
     // MARK: - 定期取引
 
-    func saveRecurring(_ rule: RecurringRule) {
-        if rule.id == nil { recurring.insert(rule) } else { recurring.update(rule) }
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func saveRecurring(_ rule: RecurringRule) -> String? {
+        let ok = rule.id == nil ? recurring.insert(rule) : recurring.update(rule)
+        guard ok else { return Self.writeFailureMessage }
         applyDueRecurring()
         reload()
+        return nil
     }
 
-    func deleteRecurring(_ rule: RecurringRule) {
-        guard let id = rule.id else { return }
-        recurring.delete(id: id)
+    /// 削除できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func deleteRecurring(_ rule: RecurringRule) -> String? {
+        guard let id = rule.id else { return "この定期取引は保存されていません。" }
+        guard recurring.delete(id: id) else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
     /// next_date が今日以前のルールから取引を生成し、next_date を進める。
@@ -351,15 +450,20 @@ final class AppStore: ObservableObject {
             let cols = [t.date, t.type.label, String(t.amount), cat, acc, toAcc, t.memo ?? ""]
             lines.append(cols.map(Self.csvEscape).joined(separator: ","))
         }
-        return lines.joined(separator: "\n")
+        // CSV の標準に合わせて CRLF で区切る（Excel 等での取り込み用）。
+        return lines.joined(separator: "\r\n")
     }
 
     /// CSV を一時ファイルに書き出して URL を返す（共有用）。
     func makeCSVFile() -> URL? {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("kakeibo_\(Dates.today()).csv")
+        guard let body = exportCSV().data(using: .utf8) else { return nil }
+        // BOM を付けないと Excel（日本語環境）で文字化けする。
+        var data = Data([0xEF, 0xBB, 0xBF])
+        data.append(body)
         do {
-            try exportCSV().data(using: .utf8)?.write(to: url)
+            try data.write(to: url)
             return url
         } catch {
             return nil
@@ -370,24 +474,65 @@ final class AppStore: ObservableObject {
     var backupFileURL: URL { URL(fileURLWithPath: dbPath) }
 
     /// 選択した DB ファイルで現在の DB を置き換える。
-    @discardableResult
-    func restore(from url: URL) -> Bool {
+    /// 検証を通過するまで現在の DB には一切触れず、差し替えに失敗したら元に戻す。
+    func restore(from url: URL) -> RestoreResult {
         let needsScope = url.startAccessingSecurityScopedResource()
         defer { if needsScope { url.stopAccessingSecurityScopedResource() } }
 
-        db.closeConnection()
         let fm = FileManager.default
+        let candidate = fm.temporaryDirectory
+            .appendingPathComponent("restore_\(UUID().uuidString).sqlite")
+        defer { try? fm.removeItem(at: candidate) }
+
+        // 1. 一時ファイルへ取り込む（ここまでは現在の DB は無傷）
         do {
-            if fm.fileExists(atPath: dbPath) { try fm.removeItem(atPath: dbPath) }
-            try fm.copyItem(at: url, to: URL(fileURLWithPath: dbPath))
-            db = try Database(path: dbPath)
+            try fm.copyItem(at: url, to: candidate)
+        } catch {
+            return .failed(error.localizedDescription)
+        }
+
+        // 2. 中身を検証する。NG ならここで終わり、現在のデータは残る。
+        switch Database.inspectBackup(at: candidate.path) {
+        case .ok: break
+        case .notADatabase: return .invalidFile
+        case .notKakeiboBackup: return .notKakeiboBackup
+        case .newerSchema: return .newerSchema
+        }
+
+        // 3. 検証済みファイルと差し替える。元の DB はロールバック用に退避しておく。
+        db.closeConnection()
+        let dbURL = URL(fileURLWithPath: dbPath)
+        let rollback = fm.temporaryDirectory
+            .appendingPathComponent("rollback_\(UUID().uuidString).sqlite")
+        var rolledAside = false
+        do {
+            if fm.fileExists(atPath: dbPath) {
+                try fm.moveItem(at: dbURL, to: rollback)
+                rolledAside = true
+            }
+            removeSidecarFiles()
+            try fm.copyItem(at: candidate, to: dbURL)
+            db = try Database(path: dbPath)   // ここで必要ならマイグレーションも走る
+            if rolledAside { try? fm.removeItem(at: rollback) }
             loadSettings()
             reload()
-            return true
+            return .success
         } catch {
-            // 失敗時は元の場所で開き直す
+            // 差し替えに失敗したら元の DB を書き戻す
+            try? fm.removeItem(at: dbURL)
+            if rolledAside { try? fm.moveItem(at: rollback, to: dbURL) }
             db = (try? Database(path: dbPath)) ?? db
-            return false
+            loadSettings()
+            reload()
+            return .failed(error.localizedDescription)
+        }
+    }
+
+    /// DB 差し替え時に取り残される WAL / ジャーナルを掃除する。
+    private func removeSidecarFiles() {
+        let fm = FileManager.default
+        for suffix in ["-wal", "-shm", "-journal"] {
+            try? fm.removeItem(atPath: dbPath + suffix)
         }
     }
 

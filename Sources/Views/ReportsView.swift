@@ -12,6 +12,28 @@ struct ReportsView: View {
 
     private var totalExpense: Int { slices.reduce(0) { $0 + $1.amount } }
 
+    /// 合計がちょうど100%になるように整数化した割合（最大剰余方式）。
+    /// 単純な切り捨て・四捨五入だと合計が99%や101%になって見た目が合わない。
+    private var percentages: [Int64: Int] {
+        guard totalExpense > 0 else { return [:] }
+        var result: [Int64: Int] = [:]
+        var remainders: [(id: Int64, fraction: Double)] = []
+        var assigned = 0
+        for slice in slices {
+            let exact = Double(slice.amount) / Double(totalExpense) * 100
+            let floored = Int(exact)
+            result[slice.id] = floored
+            assigned += floored
+            remainders.append((slice.id, exact - Double(floored)))
+        }
+        // 端数の大きい順に1%ずつ配って100%に合わせる
+        let shortfall = max(0, 100 - assigned)
+        for entry in remainders.sorted(by: { $0.fraction > $1.fraction }).prefix(shortfall) {
+            result[entry.id, default: 0] += 1
+        }
+        return result
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -127,14 +149,14 @@ struct ReportsView: View {
     }
 
     private func legendRow(_ slice: CategorySlice) -> some View {
-        let pct = totalExpense > 0 ? Double(slice.amount) / Double(totalExpense) * 100 : 0
+        let pct = percentages[slice.id] ?? 0
         return HStack {
             Circle()
                 .fill(Color(argb: slice.category.color ?? 0xFF90A4AE))
                 .frame(width: 12, height: 12)
             Text(slice.category.name)
             Spacer()
-            Text(String(format: "%.0f%%", pct))
+            Text("\(pct)%")
                 .font(.caption).foregroundStyle(.secondary)
             Text(Money.format(slice.amount))
                 .font(.callout).monospacedDigit()

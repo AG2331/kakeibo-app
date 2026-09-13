@@ -8,10 +8,11 @@ struct SettingsRepository {
             .first?.string("value")
     }
 
-    func set(_ key: String, _ value: String) {
+    @discardableResult
+    func set(_ key: String, _ value: String) -> Bool {
         db.run("INSERT INTO settings(key, value) VALUES(?,?) " +
                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-               [.text(key), .text(value)])
+               [.text(key), .text(value)]).ok
     }
 
     /// 保存済みの設定をまとめて読み込む（未設定はデフォルト）。

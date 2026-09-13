@@ -77,11 +77,25 @@ struct AccountNode: Identifiable {
 /// 口座タブ用: クレジットカードの請求サイクル情報。
 struct CreditCardStatementInfo: Identifiable {
     let accountId: Int64
-    let periodStart: String     // 直近で締めた期間の開始日
-    let periodEnd: String       // 直近の締め日
-    let outstandingAmount: Int  // 未精算額（= max(0, -口座残高)）
-    let nextPaymentDate: String // 次回引き落とし予定日
-    let suggestedAmount: Int    // 今回請求予定額（= periodStart〜periodEndの支出合計）
+    /// 未精算額（残高ベース。まだ引き落とされていない利用分すべて）
+    let outstandingAmount: Int
+    /// 直近で締まった請求のうち、まだ支払っていない額（支払い済みなら0）
+    let dueAmount: Int
+    /// その請求の支払日
+    let dueDate: String
+    /// 支払日を過ぎてもまだ支払われていない
+    let isOverdue: Bool
+    /// 進行中サイクルのこれまでの利用額（まだ締まっていない暫定額）
+    let upcomingAmount: Int
+    /// 進行中サイクルの支払予定日
+    let upcomingDueDate: String
 
     var id: Int64 { accountId }
+
+    /// 直近の請求は支払い済みか。
+    var isSettled: Bool { dueAmount == 0 }
+
+    /// 次に支払うことになる金額と日付。支払い済みなら進行中サイクルの分を指す。
+    var nextAmount: Int { isSettled ? upcomingAmount : dueAmount }
+    var nextDate: String { isSettled ? upcomingDueDate : dueDate }
 }

@@ -139,6 +139,7 @@ struct BudgetEditView: View {
 
     let target: BudgetTarget
     @State private var amountText: String = ""
+    @State private var saveError: String?
 
     var body: some View {
         NavigationStack {
@@ -163,11 +164,16 @@ struct BudgetEditView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
-                        store.setBudget(categoryId: target.categoryId, amount: Money.parse(amountText) ?? 0)
-                        dismiss()
+                        if let error = store.setBudget(categoryId: target.categoryId,
+                                                       amount: Money.parse(amountText) ?? 0) {
+                            saveError = error
+                        } else {
+                            dismiss()
+                        }
                     }
                 }
             }
+            .errorAlert("保存できません", message: $saveError)
             .onAppear {
                 let current = store.budgetAmount(categoryId: target.categoryId)
                 amountText = current > 0 ? String(current) : ""

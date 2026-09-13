@@ -16,23 +16,32 @@ struct CategoryRepository {
     }
 
     @discardableResult
-    func insert(_ c: Category) -> Int64 {
+    func insert(_ c: Category) -> Bool {
         db.run(
             "INSERT INTO categories(name, type, parent_id, icon, color, sort_order) VALUES(?,?,?,?,?,?)",
             [.text(c.name), .text(c.type.rawValue), SQLValue(c.parentId),
-             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder))])
+             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder))]).ok
     }
 
-    func update(_ c: Category) {
-        guard let id = c.id else { return }
-        db.run(
+    @discardableResult
+    func update(_ c: Category) -> Bool {
+        guard let id = c.id else { return false }
+        return db.run(
             "UPDATE categories SET name=?, type=?, parent_id=?, icon=?, color=?, sort_order=? WHERE id=?",
             [.text(c.name), .text(c.type.rawValue), SQLValue(c.parentId),
-             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder)), .int(id)])
+             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder)), .int(id)]).ok
     }
 
-    func delete(id: Int64) {
-        db.run("DELETE FROM categories WHERE id=?", [.int(id)])
+    /// 削除できたかを返す。他から参照されている場合は false。
+    @discardableResult
+    func delete(id: Int64) -> Bool {
+        db.run("DELETE FROM categories WHERE id=?", [.int(id)]).ok
+    }
+
+    /// 指定カテゴリの子（サブカテゴリ）名。
+    func childNames(id: Int64) -> [String] {
+        db.query("SELECT name FROM categories WHERE parent_id=? ORDER BY sort_order, id",
+                 [.int(id)]).compactMap { $0.string("name") }
     }
 
     /// 指定カテゴリの子（サブカテゴリ）数。

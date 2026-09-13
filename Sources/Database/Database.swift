@@ -1,6 +1,21 @@
 import Foundation
 import SQLite3
 
+/// DB を開けない・マイグレーションできないなど、起動を妨げる失敗。
+enum DatabaseError: LocalizedError {
+    case cannotOpen(String)
+    case migrationFailed(version: Int32, detail: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .cannotOpen(let detail):
+            return "データベースを開けませんでした。（\(detail)）"
+        case .migrationFailed(let version, let detail):
+            return "データベースの更新（v\(version)）に失敗しました。（\(detail)）"
+        }
+    }
+}
+
 /// バインド用の値。
 enum SQLValue {
     case int(Int64)
@@ -21,18 +36,31 @@ struct Row {
     func string(_ key: String) -> String? { values[key] as? String }
 }
 
+/// 書き込み(INSERT/UPDATE/DELETE)の結果。rowId は INSERT 時のみ意味を持つ。
+struct WriteResult {
+    let ok: Bool
+    let rowId: Int64
+    let message: String?
+    /// 外部キー制約違反（他のデータから参照されているため削除・更新できない）か。
+    let isConstraintViolation: Bool
+
+    static let failure = WriteResult(ok: false, rowId: 0, message: nil,
+                                     isConstraintViolation: false)
+}
+
 /// libsqlite3 を直接利用する薄いラッパ。
 final class Database {
     private var db: OpaquePointer?
     private static let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
 
     /// path: ファイルパス。":memory:" でインメモリ（テスト用）。
-    init(path: String) throws {
+    /// migrate: false にするとマイグレーションを行わない（復元候補ファイルの検査用）。
+    init(path: String, migrate: Bool = true) throws {
         if sqlite3_open(path, &db) != SQLITE_OK {
-            throw error("open failed")
+            throw DatabaseError.cannotOpen(lastErrorMessage() ?? "unknown")
         }
         exec("PRAGMA foreign_keys = ON")
-        try migrateIfNeeded()
+        if migrate { try migrateIfNeeded() }
     }
 
     deinit { sqlite3_close(db) }
@@ -45,18 +73,30 @@ final class Database {
 
     // MARK: - 実行系
 
-    /// DDL や PRAGMA など、結果を返さない文。
-    func exec(_ sql: String) {
-        sqlite3_exec(db, sql, nil, nil, nil)
+    /// DDL や PRAGMA など、結果を返さない文。成功したかを返す。
+    @discardableResult
+    func exec(_ sql: String) -> Bool {
+        sqlite3_exec(db, sql, nil, nil, nil) == SQLITE_OK
     }
 
-    /// INSERT/UPDATE/DELETE。INSERT 時は lastInsertRowId を返す。
+    /// INSERT/UPDATE/DELETE。成否と、INSERT 時の lastInsertRowId を返す。
     @discardableResult
-    func run(_ sql: String, _ args: [SQLValue] = []) -> Int64 {
-        guard let stmt = prepare(sql, args) else { return 0 }
+    func run(_ sql: String, _ args: [SQLValue] = []) -> WriteResult {
+        guard let stmt = prepare(sql, args) else {
+            return WriteResult(ok: false, rowId: 0, message: lastErrorMessage(),
+                               isConstraintViolation: false)
+        }
         defer { sqlite3_finalize(stmt) }
-        sqlite3_step(stmt)
-        return sqlite3_last_insert_rowid(db)
+
+        guard sqlite3_step(stmt) == SQLITE_DONE else {
+            // 拡張エラーコードの下位8bitが SQLITE_CONSTRAINT なら制約違反。
+            let extended = sqlite3_extended_errcode(db)
+            let isConstraint = (extended & 0xFF) == SQLITE_CONSTRAINT
+            return WriteResult(ok: false, rowId: 0, message: lastErrorMessage(),
+                               isConstraintViolation: isConstraint)
+        }
+        return WriteResult(ok: true, rowId: sqlite3_last_insert_rowid(db),
+                           message: nil, isConstraintViolation: false)
     }
 
     /// SELECT。行の配列を返す。
@@ -107,9 +147,8 @@ final class Database {
         return stmt
     }
 
-    private func error(_ msg: String) -> NSError {
-        let detail = db.map { String(cString: sqlite3_errmsg($0)) } ?? ""
-        return NSError(domain: "Database", code: 1,
-                       userInfo: [NSLocalizedDescriptionKey: "\(msg): \(detail)"])
+    /// 直近の SQLite エラーメッセージ。マイグレーション側からも使う。
+    func lastErrorMessage() -> String? {
+        db.map { String(cString: sqlite3_errmsg($0)) }
     }
 }

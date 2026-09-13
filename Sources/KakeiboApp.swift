@@ -2,14 +2,20 @@ import SwiftUI
 
 @main
 struct KakeiboApp: App {
-    @StateObject private var store = AppStore.makeDefault()
+    @StateObject private var launcher = AppLauncher()
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(store)
-                .tint(TxPalette.accent)
-                .preferredColorScheme(store.settings.theme.colorScheme)
+            switch launcher.phase {
+            case .ready(let store):
+                RootView()
+                    .environmentObject(store)
+            case .failed(let message):
+                StartupFailureView(message: message,
+                                   retry: { launcher.open() },
+                                   startFresh: { launcher.startFresh() })
+                    .tint(TxPalette.accent)
+            }
         }
     }
 }

@@ -53,8 +53,7 @@ struct DataView: View {
             switch result {
             case .success(let urls):
                 guard let url = urls.first else { return }
-                resultMessage = store.restore(from: url)
-                    ? "復元しました。" : "復元に失敗しました。ファイルを確認してください。"
+                resultMessage = store.restore(from: url).message
             case .failure(let error):
                 resultMessage = "読み込みに失敗しました: \(error.localizedDescription)"
             }
