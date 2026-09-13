@@ -9,6 +9,9 @@ struct RootView: View {
             HomeView()
                 .tabItem { Label("ホーム", systemImage: "list.bullet.rectangle") }
 
+            HistoryView()
+                .tabItem { Label("履歴", systemImage: "calendar") }
+
             ReportsView()
                 .tabItem { Label("レポート", systemImage: "chart.pie") }
 

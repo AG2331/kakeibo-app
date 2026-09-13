@@ -25,6 +25,8 @@ final class AppStore: ObservableObject {
     @Published var settings: AppSettings = .default
     @Published var recurringRules: [RecurringRule] = []
     @Published var creditCardStatements: [Int64: CreditCardStatementInfo] = [:]
+    /// 履歴タブのカレンダー用。選択中の月の日別内訳。
+    @Published var monthCalendar: [String: DayTotals] = [:]
 
     init(db: Database, dbPath: String) {
         self.db = db
@@ -79,6 +81,7 @@ final class AppStore: ObservableObject {
         creditCardStatements = Dictionary(uniqueKeysWithValues: accountList
             .filter { $0.hasStatementConfig }
             .compactMap { a in a.id.flatMap { id in creditCardStatement(for: a).map { (id, $0) } } })
+        monthCalendar = calendarTotals(of: selectedMonth)
     }
 
     func shiftMonth(by delta: Int) {
@@ -344,13 +347,26 @@ final class AppStore: ObservableObject {
         return transactions.summary(start: start, end: end)
     }
 
-    /// 日別の支出合計（カレンダー表示用）。"YYYY-MM-DD" -> 支出額。
-    func dailyExpense() -> [String: Int] {
-        var result: [String: Int] = [:]
-        for t in monthTransactions where t.type == .expense {
-            result[t.date, default: 0] += t.amount
+    /// 日別の収入・支出・振替（カレンダー表示用）。"YYYY-MM-DD" -> 内訳。
+    /// カレンダーは暦月で表示するため、月の開始日の設定に関わらず暦月で集計する。
+    func calendarTotals(of month: Date) -> [String: DayTotals] {
+        let (start, end) = Dates.monthRange(month, startDay: 1)
+        var result: [String: DayTotals] = [:]
+        for t in transactions.range(start: start, end: end) {
+            var totals = result[t.date] ?? DayTotals()
+            switch t.type {
+            case .income: totals.income += t.amount
+            case .expense: totals.expense += t.amount
+            case .transfer: totals.transfer += t.amount
+            }
+            result[t.date] = totals
         }
         return result
+    }
+
+    /// 指定日の取引（カレンダーの詳細表示用）。
+    func transactions(on day: String) -> [TxRecord] {
+        transactions.range(start: day, end: day)
     }
 
     // MARK: - 予算管理

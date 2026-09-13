@@ -15,3 +15,14 @@ struct MonthBar: Identifiable {
     let expense: Int
     var id: Date { month }
 }
+
+/// カレンダーの1日分の内訳。振替は収支に響かないが、その日に何があったかは示す。
+struct DayTotals: Equatable {
+    var income = 0
+    var expense = 0
+    var transfer = 0
+
+    var isEmpty: Bool { income == 0 && expense == 0 && transfer == 0 }
+    /// その日の収支（振替は含めない）。
+    var net: Int { income - expense }
+}
