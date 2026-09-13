@@ -48,11 +48,6 @@ struct TransactionEditView: View {
         return store.accountList.first { $0.id == to }?.type == .credit
     }
 
-    /// 親→サブの順に並べたカテゴリ（サブはインデント表示）。
-    private var categoryOptions: [(category: Category, depth: Int)] {
-        store.orderedCategories(of: type)
-    }
-
     var body: some View {
         NavigationStack {
             Form {
@@ -86,13 +81,7 @@ struct TransactionEditView: View {
                     }
                 } else {
                     Section {
-                        Picker("カテゴリ", selection: $categoryId) {
-                            Text("選択してください").tag(Int64?.none)
-                            ForEach(categoryOptions, id: \.category.id) { entry in
-                                Text(entry.depth == 0 ? entry.category.name : "　└ \(entry.category.name)")
-                                    .tag(Int64?.some(entry.category.id ?? 0))
-                            }
-                        }
+                        CategoryPickerField(type: type, selection: $categoryId)
                         AccountPickerField(title: "口座", selection: $accountId)
                     }
                 }
@@ -139,6 +128,16 @@ struct TransactionEditView: View {
         }
     }
 
+    /// カテゴリの選び方に問題があれば理由を返す。小分類のある大分類は小分類まで選ぶ。
+    private func categoryValidationMessage() -> String? {
+        guard let categoryId else { return "カテゴリを選択してください" }
+        guard let category = store.categoriesById[categoryId] else { return "カテゴリを選択してください" }
+        if category.parentId == nil, !store.subcategories(of: categoryId).isEmpty {
+            return "小分類まで選択してください"
+        }
+        return nil
+    }
+
     private func save() {
         guard let amount = Money.parse(amountText), amount > 0 else {
             validationMessage = "金額を正しく入力してください"; return
@@ -150,8 +149,8 @@ struct TransactionEditView: View {
             guard let to = toAccountId, to != account else {
                 validationMessage = "振替先に別の口座を選択してください"; return
             }
-        } else if categoryId == nil {
-            validationMessage = "カテゴリを選択してください"; return
+        } else if let reason = categoryValidationMessage() {
+            validationMessage = reason; return
         }
 
         let record = TxRecord(

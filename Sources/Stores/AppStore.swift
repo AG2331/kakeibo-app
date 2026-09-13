@@ -137,6 +137,23 @@ final class AppStore: ObservableObject {
         categories(of: type).filter { $0.parentId == nil && $0.id != selfId }
     }
 
+    /// 大分類（親カテゴリ）の一覧。
+    func parentCategories(of type: TxType) -> [Category] {
+        categories(of: type).filter { $0.parentId == nil }
+    }
+
+    /// 指定した大分類に属する小分類。
+    func subcategories(of parentId: Int64) -> [Category] {
+        allCategories.filter { $0.parentId == parentId }.sorted { $0.sortOrder < $1.sortOrder }
+    }
+
+    /// 集計に使う大分類。小分類なら親を、親ならそれ自身を返す。
+    func rootCategory(of categoryId: Int64) -> Category? {
+        guard let category = categoriesById[categoryId] else { return nil }
+        guard let parentId = category.parentId else { return category }
+        return categoriesById[parentId] ?? category
+    }
+
     /// 保存できなければ理由を返す（nil = 成功）。
     @discardableResult
     func saveCategory(_ category: Category) -> String? {
@@ -322,13 +339,24 @@ final class AppStore: ObservableObject {
 
     // MARK: - 集計・レポート
 
+    /// カテゴリ別支出。小分類は大分類にまとめて数える（「食料品」「外食」→「食費」）。
     func expenseBreakdown() -> [CategorySlice] {
         let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
-        let map = transactions.expenseByCategory(start: start, end: end)
-        return map.compactMap { cid, amount in
-            categoriesById[cid].map { CategorySlice(category: $0, amount: amount) }
+        return expenseByRootCategory(start: start, end: end)
+            .compactMap { cid, amount in
+                categoriesById[cid].map { CategorySlice(category: $0, amount: amount) }
+            }
+            .sorted { $0.amount > $1.amount }
+    }
+
+    /// 期間内の支出を大分類ごとにまとめる。大分類のid -> 金額。
+    private func expenseByRootCategory(start: String, end: String) -> [Int64: Int] {
+        var result: [Int64: Int] = [:]
+        for (categoryId, amount) in transactions.expenseByCategory(start: start, end: end) {
+            guard let root = rootCategory(of: categoryId), let rootId = root.id else { continue }
+            result[rootId, default: 0] += amount
         }
-        .sorted { $0.amount > $1.amount }
+        return result
     }
 
     func monthlyTrend(months: Int = 6) -> [MonthBar] {
@@ -396,7 +424,8 @@ final class AppStore: ObservableObject {
         let ym = currentYearMonth
         let all = budgets.forMonth(ym)
         let (start, end) = Dates.monthRange(selectedMonth, startDay: settings.monthStartDay)
-        let spentByCat = transactions.expenseByCategory(start: start, end: end)
+        // 予算は大分類ごとに立てるので、小分類の支出も親にまとめて数える
+        let spentByCat = expenseByRootCategory(start: start, end: end)
 
         let overall = all.first { $0.categoryId == nil }.map {
             BudgetProgress(categoryId: nil, name: "全体", color: nil,

@@ -28,6 +28,7 @@
 		6A0E945D68A60B7C50AA1F8C /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1AC47D355503FFE831DD79 /* RootView.swift */; };
 		6CF8590F59DEE35F34B863A5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4B7DEDBE42E57CC5698679 /* AppSettings.swift */; };
 		6D6B1CA3390AAC16945B56FC /* Dates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB720DC44AC8A1286DC6777 /* Dates.swift */; };
+		6E2EC4A832B9F7197E2E39CD /* CategoryHierarchyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E76E54648B4DDB7DB0876B8 /* CategoryHierarchyTests.swift */; };
 		7301799CEA7CC7D223A71439 /* RecurringRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8329E59FFC50C5E6BD94DF /* RecurringRepository.swift */; };
 		755EAC3E95F1FDC029901828 /* RepositoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E18378AD26D333777FCA210 /* RepositoryTests.swift */; };
 		79E19550AB66D71D8ADFE0A2 /* AppLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F780FCF1D603BA6B818F5C9 /* AppLauncher.swift */; };
@@ -37,6 +38,7 @@
 		81BDC600C56E04F9AC3F5A3A /* AccountPickerField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5B5CEECDDF90AC18476410 /* AccountPickerField.swift */; };
 		86BE3CEBB2BD5D0BAF3A2574 /* AccountsOverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41C04E813875E39313FBDB39 /* AccountsOverviewView.swift */; };
 		880C599FA97641D0BC65BEE0 /* BudgetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9089C16A7382A4736C8725D /* BudgetRepository.swift */; };
+		89A87E4C50F881B631CEBAD7 /* CategoryPickerField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AAFD8C98A504D71B39F243D /* CategoryPickerField.swift */; };
 		8FB7EB82138354E1177B87DC /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */; };
 		91CB0751C26E0F76523D461B /* CreditCardCycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218E9C5BC937337EA5D679C8 /* CreditCardCycle.swift */; };
 		9651963231CCB91B62E08464 /* StartupFailureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43673DAB81DC3F83CB18E6C1 /* StartupFailureView.swift */; };
@@ -93,8 +95,10 @@
 		679D7B4DD2CFF4BB9F553402 /* UtilTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UtilTests.swift; sourceTree = "<group>"; };
 		683F506ACDA21C676A510947 /* KakeiboApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KakeiboApp.swift; sourceTree = "<group>"; };
 		6A09EC8C53C13793DD4A7C23 /* KakeiboTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = KakeiboTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6E76E54648B4DDB7DB0876B8 /* CategoryHierarchyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryHierarchyTests.swift; sourceTree = "<group>"; };
 		7265005079EB92D44D50702F /* Reports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reports.swift; sourceTree = "<group>"; };
 		77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		7AAFD8C98A504D71B39F243D /* CategoryPickerField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryPickerField.swift; sourceTree = "<group>"; };
 		7F780FCF1D603BA6B818F5C9 /* AppLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLauncher.swift; sourceTree = "<group>"; };
 		8354BE4D04B6EB49EAECB923 /* ReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsView.swift; sourceTree = "<group>"; };
 		836BA864CA52883C395C6B37 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
@@ -217,6 +221,7 @@
 				E87350C87699A2472E59A419 /* BudgetView.swift */,
 				15B3EC58EBF66687D4C4C704 /* CalendarMonthView.swift */,
 				25F21A35CC3E76B7775310DB /* CategoryListView.swift */,
+				7AAFD8C98A504D71B39F243D /* CategoryPickerField.swift */,
 				4CC675ADE7BAB5E86EC93304 /* DataView.swift */,
 				62901F9BB54D88F874B316C9 /* ErrorAlert.swift */,
 				836BA864CA52883C395C6B37 /* HistoryView.swift */,
@@ -263,6 +268,7 @@
 				95E650225D8803A43AF3C792 /* AppStoreTests.swift */,
 				0DC3E3E2FE7DDF79F75B928B /* BackupInspectionTests.swift */,
 				4FF916CC433B08F5E8614C31 /* CalendarTests.swift */,
+				6E76E54648B4DDB7DB0876B8 /* CategoryHierarchyTests.swift */,
 				F6DE4C9DA31F586F1E2B57DB /* CreditCardCycleTests.swift */,
 				F005B22971FE5D076174F882 /* DatabaseTests.swift */,
 				1E18378AD26D333777FCA210 /* RepositoryTests.swift */,
@@ -378,6 +384,7 @@
 				7C82CF1431691A3F76F981BD /* CalendarMonthView.swift in Sources */,
 				B8EAC4FE7C2C618A9CC35E85 /* Category.swift in Sources */,
 				F889AACE946C998AC3809040 /* CategoryListView.swift in Sources */,
+				89A87E4C50F881B631CEBAD7 /* CategoryPickerField.swift in Sources */,
 				594B552172B71DBEF93319D4 /* CategoryRepository.swift in Sources */,
 				26A4C3B6E8E76D493A3A4B0D /* Color+Hex.swift in Sources */,
 				91CB0751C26E0F76523D461B /* CreditCardCycle.swift in Sources */,
@@ -414,6 +421,7 @@
 				99A7628AD6B6E4574390E2F4 /* AppStoreTests.swift in Sources */,
 				41DFBFE6BB8188FAD71FE159 /* BackupInspectionTests.swift in Sources */,
 				B816915FE1AA6F4C025E5BAE /* CalendarTests.swift in Sources */,
+				6E2EC4A832B9F7197E2E39CD /* CategoryHierarchyTests.swift in Sources */,
 				B1B7E711B304D5E6EA7C65B2 /* CreditCardCycleTests.swift in Sources */,
 				0C0398EFD25FA4C24D19B823 /* DatabaseTests.swift in Sources */,
 				755EAC3E95F1FDC029901828 /* RepositoryTests.swift in Sources */,
