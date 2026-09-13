@@ -9,7 +9,7 @@ struct RecurringRepository {
     }
 
     @discardableResult
-    func insert(_ r: RecurringRule) -> Int64 {
+    func insert(_ r: RecurringRule) -> Bool {
         db.run(
             """
             INSERT INTO recurring_rules(type, amount, category_id, account_id, to_account_id, memo,
@@ -19,12 +19,13 @@ struct RecurringRepository {
             [.text(r.type.rawValue), .int(Int64(r.amount)), SQLValue(r.categoryId),
              .int(r.accountId), SQLValue(r.toAccountId), SQLValue(r.memo),
              .text(r.frequency.rawValue), .int(Int64(r.interval)),
-             .text(r.nextDate), SQLValue(r.endDate)]).rowId
+             .text(r.nextDate), SQLValue(r.endDate)]).ok
     }
 
-    func update(_ r: RecurringRule) {
-        guard let id = r.id else { return }
-        db.run(
+    @discardableResult
+    func update(_ r: RecurringRule) -> Bool {
+        guard let id = r.id else { return false }
+        return db.run(
             """
             UPDATE recurring_rules SET type=?, amount=?, category_id=?, account_id=?, to_account_id=?,
               memo=?, frequency=?, interval=?, next_date=?, end_date=? WHERE id=?
@@ -32,11 +33,13 @@ struct RecurringRepository {
             [.text(r.type.rawValue), .int(Int64(r.amount)), SQLValue(r.categoryId),
              .int(r.accountId), SQLValue(r.toAccountId), SQLValue(r.memo),
              .text(r.frequency.rawValue), .int(Int64(r.interval)),
-             .text(r.nextDate), SQLValue(r.endDate), .int(id)])
+             .text(r.nextDate), SQLValue(r.endDate), .int(id)]).ok
     }
 
-    func updateNextDate(id: Int64, _ nextDate: String) {
-        db.run("UPDATE recurring_rules SET next_date = ? WHERE id = ?", [.text(nextDate), .int(id)])
+    @discardableResult
+    func updateNextDate(id: Int64, _ nextDate: String) -> Bool {
+        db.run("UPDATE recurring_rules SET next_date = ? WHERE id = ?",
+               [.text(nextDate), .int(id)]).ok
     }
 
     @discardableResult

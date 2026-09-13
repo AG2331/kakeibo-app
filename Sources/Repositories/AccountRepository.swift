@@ -11,7 +11,7 @@ struct AccountRepository {
     }
 
     @discardableResult
-    func insert(_ a: Account) -> Int64 {
+    func insert(_ a: Account) -> Bool {
         db.run(
             """
             INSERT INTO accounts(
@@ -22,12 +22,13 @@ struct AccountRepository {
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
              .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId),
              SQLValue(a.closingDay), SQLValue(a.paymentDay), .int(Int64(a.paymentMonthOffset)),
-             SQLValue(a.paymentAccountId)]).rowId
+             SQLValue(a.paymentAccountId)]).ok
     }
 
-    func update(_ a: Account) {
-        guard let id = a.id else { return }
-        db.run(
+    @discardableResult
+    func update(_ a: Account) -> Bool {
+        guard let id = a.id else { return false }
+        return db.run(
             """
             UPDATE accounts SET
               name=?, type=?, initial_balance=?, sort_order=?, archived=?, parent_id=?,
@@ -37,7 +38,7 @@ struct AccountRepository {
             [.text(a.name), .text(a.type.rawValue), .int(Int64(a.initialBalance)),
              .int(Int64(a.sortOrder)), .int(a.archived ? 1 : 0), SQLValue(a.parentId),
              SQLValue(a.closingDay), SQLValue(a.paymentDay), .int(Int64(a.paymentMonthOffset)),
-             SQLValue(a.paymentAccountId), .int(id)])
+             SQLValue(a.paymentAccountId), .int(id)]).ok
     }
 
     /// 削除できたかを返す。他から参照されている場合は false。

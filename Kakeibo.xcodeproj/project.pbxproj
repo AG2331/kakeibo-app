@@ -11,6 +11,7 @@
 		10D86990AEE209DF728CA84E /* TransactionEditView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C469DCCE3C71A3F3DA85731 /* TransactionEditView.swift */; };
 		116C0E21B0D870F1945A5FD1 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0388790C61F6B8F057F078B7 /* Database.swift */; };
 		13C68DAD76E99FDD4D9112B8 /* Money.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEB10C847597C144B45D2354 /* Money.swift */; };
+		15CCB362EEBBBD61EF5FD542 /* ErrorAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62901F9BB54D88F874B316C9 /* ErrorAlert.swift */; };
 		18BA436411CCC3E51B59846F /* KakeiboApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 683F506ACDA21C676A510947 /* KakeiboApp.swift */; };
 		26A4C3B6E8E76D493A3A4B0D /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FADBF9296CD30E41F87C35 /* Color+Hex.swift */; };
 		2958EF3D937C04656C63162D /* AmountField.swift in Sources */ = {isa = PBXBuildFile; fileRef = D218A87979AC974531B2EEA7 /* AmountField.swift */; };
@@ -24,6 +25,7 @@
 		6CF8590F59DEE35F34B863A5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4B7DEDBE42E57CC5698679 /* AppSettings.swift */; };
 		6D6B1CA3390AAC16945B56FC /* Dates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BB720DC44AC8A1286DC6777 /* Dates.swift */; };
 		7301799CEA7CC7D223A71439 /* RecurringRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD8329E59FFC50C5E6BD94DF /* RecurringRepository.swift */; };
+		79E19550AB66D71D8ADFE0A2 /* AppLauncher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F780FCF1D603BA6B818F5C9 /* AppLauncher.swift */; };
 		7C82CF1431691A3F76F981BD /* CalendarMonthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B3EC58EBF66687D4C4C704 /* CalendarMonthView.swift */; };
 		81A981CFADFCFE2C072344FB /* BackupInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 602D4813A75771A3687B13C4 /* BackupInspection.swift */; };
 		81BDC600C56E04F9AC3F5A3A /* AccountPickerField.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA5B5CEECDDF90AC18476410 /* AccountPickerField.swift */; };
@@ -31,6 +33,7 @@
 		880C599FA97641D0BC65BEE0 /* BudgetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9089C16A7382A4736C8725D /* BudgetRepository.swift */; };
 		8FB7EB82138354E1177B87DC /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */; };
 		91CB0751C26E0F76523D461B /* CreditCardCycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 218E9C5BC937337EA5D679C8 /* CreditCardCycle.swift */; };
+		9651963231CCB91B62E08464 /* StartupFailureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43673DAB81DC3F83CB18E6C1 /* StartupFailureView.swift */; };
 		A2BD769BF0CD0F851AE7DDC4 /* SettingsRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDA4EF3DE36D4408B189F0A5 /* SettingsRepository.swift */; };
 		A3E64654F93D7381036A243F /* RecurringRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96235FA60502D1EA1549A0C /* RecurringRule.swift */; };
 		B0038011838174DBA30376FF /* RecurringListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A989A51E1A5CBF6C4894408F /* RecurringListView.swift */; };
@@ -55,14 +58,17 @@
 		271FD4BC971F1681A24FB747 /* Migrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Migrations.swift; sourceTree = "<group>"; };
 		3BEF443B5D1757DCD88A5885 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		41C04E813875E39313FBDB39 /* AccountsOverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsOverviewView.swift; sourceTree = "<group>"; };
+		43673DAB81DC3F83CB18E6C1 /* StartupFailureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupFailureView.swift; sourceTree = "<group>"; };
 		44FADBF9296CD30E41F87C35 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		4CC675ADE7BAB5E86EC93304 /* DataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataView.swift; sourceTree = "<group>"; };
 		59EE64F8006FB3FFFD50A945 /* CategoryRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CategoryRepository.swift; sourceTree = "<group>"; };
 		5A4B7DEDBE42E57CC5698679 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		602D4813A75771A3687B13C4 /* BackupInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupInspection.swift; sourceTree = "<group>"; };
+		62901F9BB54D88F874B316C9 /* ErrorAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorAlert.swift; sourceTree = "<group>"; };
 		683F506ACDA21C676A510947 /* KakeiboApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KakeiboApp.swift; sourceTree = "<group>"; };
 		7265005079EB92D44D50702F /* Reports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Reports.swift; sourceTree = "<group>"; };
 		77BE4A3AB5E873F9046B6CB7 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		7F780FCF1D603BA6B818F5C9 /* AppLauncher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLauncher.swift; sourceTree = "<group>"; };
 		8354BE4D04B6EB49EAECB923 /* ReportsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReportsView.swift; sourceTree = "<group>"; };
 		86A6B732154E0010F5448616 /* Kakeibo.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Kakeibo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		8C469DCCE3C71A3F3DA85731 /* TransactionEditView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionEditView.swift; sourceTree = "<group>"; };
@@ -148,6 +154,7 @@
 		698DF6E58BB484AB33C07CA5 /* Stores */ = {
 			isa = PBXGroup;
 			children = (
+				7F780FCF1D603BA6B818F5C9 /* AppLauncher.swift */,
 				AE141DB9C1601ECF7C8BB40B /* AppStore.swift */,
 			);
 			path = Stores;
@@ -173,11 +180,13 @@
 				15B3EC58EBF66687D4C4C704 /* CalendarMonthView.swift */,
 				25F21A35CC3E76B7775310DB /* CategoryListView.swift */,
 				4CC675ADE7BAB5E86EC93304 /* DataView.swift */,
+				62901F9BB54D88F874B316C9 /* ErrorAlert.swift */,
 				8F4F0E3CF69B9E7E0DA04A5D /* HomeView.swift */,
 				A989A51E1A5CBF6C4894408F /* RecurringListView.swift */,
 				8354BE4D04B6EB49EAECB923 /* ReportsView.swift */,
 				EA1AC47D355503FFE831DD79 /* RootView.swift */,
 				3BEF443B5D1757DCD88A5885 /* SettingsView.swift */,
+				43673DAB81DC3F83CB18E6C1 /* StartupFailureView.swift */,
 				8C469DCCE3C71A3F3DA85731 /* TransactionEditView.swift */,
 			);
 			path = Views;
@@ -280,6 +289,7 @@
 				07E3A1A6B5ED4FBB34B3E957 /* AccountRepository.swift in Sources */,
 				86BE3CEBB2BD5D0BAF3A2574 /* AccountsOverviewView.swift in Sources */,
 				2958EF3D937C04656C63162D /* AmountField.swift in Sources */,
+				79E19550AB66D71D8ADFE0A2 /* AppLauncher.swift in Sources */,
 				6CF8590F59DEE35F34B863A5 /* AppSettings.swift in Sources */,
 				F2D266F2E8D1E8167C5F19EF /* AppStore.swift in Sources */,
 				81A981CFADFCFE2C072344FB /* BackupInspection.swift in Sources */,
@@ -295,6 +305,7 @@
 				FDB1C00DDA86014046243D70 /* DataView.swift in Sources */,
 				116C0E21B0D870F1945A5FD1 /* Database.swift in Sources */,
 				6D6B1CA3390AAC16945B56FC /* Dates.swift in Sources */,
+				15CCB362EEBBBD61EF5FD542 /* ErrorAlert.swift in Sources */,
 				555A0A35FC47F6C91A48F0A0 /* HomeView.swift in Sources */,
 				18BA436411CCC3E51B59846F /* KakeiboApp.swift in Sources */,
 				C05285DAEF6887F6477AEFAA /* Migrations.swift in Sources */,
@@ -307,6 +318,7 @@
 				6A0E945D68A60B7C50AA1F8C /* RootView.swift in Sources */,
 				A2BD769BF0CD0F851AE7DDC4 /* SettingsRepository.swift in Sources */,
 				CD01A3EA7F684A3296F863E3 /* SettingsView.swift in Sources */,
+				9651963231CCB91B62E08464 /* StartupFailureView.swift in Sources */,
 				10D86990AEE209DF728CA84E /* TransactionEditView.swift in Sources */,
 				B8539F2E7021A81B4FC83006 /* TransactionRepository.swift in Sources */,
 				692B5DCF81FC56CAB3766936 /* TxRecord.swift in Sources */,

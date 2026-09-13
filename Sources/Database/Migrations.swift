@@ -9,32 +9,49 @@ extension Database {
         guard current < Database.schemaVersion else { return }
 
         if current < 1 {
-            applyV1()
-            seedDefaults()
+            try applyV1()
+            try seedDefaults()
         }
         if current < 2 {
-            applyV2()
+            try applyV2()
         }
         if current < 3 {
-            applyV3()
+            try applyV3()
         }
         if current < 4 {
-            applyV4()
+            try applyV4()
         }
         // 以降のバージョンはここに分岐を追加する。
 
-        setUserVersion(Database.schemaVersion)
+        try setUserVersion(Database.schemaVersion)
+    }
+
+    /// DDL を実行し、失敗したらマイグレーションを中断する。
+    /// 握り潰すと中途半端なスキーマのまま動き続けてしまうため必ず投げる。
+    private func migrate(_ version: Int32, _ sql: String) throws {
+        guard exec(sql) else {
+            throw DatabaseError.migrationFailed(version: version,
+                                                detail: lastErrorMessage() ?? "unknown")
+        }
+    }
+
+    private func migrate(_ version: Int32, _ sql: String, _ args: [SQLValue]) throws {
+        let result = run(sql, args)
+        guard result.ok else {
+            throw DatabaseError.migrationFailed(version: version,
+                                                detail: result.message ?? "unknown")
+        }
     }
 
     private func userVersion() -> Int32 {
         Int32(query("PRAGMA user_version").first?.int("user_version") ?? 0)
     }
 
-    private func setUserVersion(_ v: Int32) {
-        exec("PRAGMA user_version = \(v)")
+    private func setUserVersion(_ v: Int32) throws {
+        try migrate(v, "PRAGMA user_version = \(v)")
     }
 
-    private func applyV1() {
+    private func applyV1() throws {
         let ddl = [
             """
             CREATE TABLE accounts (
@@ -89,12 +106,12 @@ extension Database {
             )
             """,
         ]
-        for stmt in ddl { exec(stmt) }
+        for stmt in ddl { try migrate(1, stmt) }
     }
 
     /// v2: 定期取引ルール。
-    private func applyV2() {
-        exec(
+    private func applyV2() throws {
+        try migrate(2,
             """
             CREATE TABLE recurring_rules (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,21 +130,22 @@ extension Database {
     }
 
     /// v3: 口座に親子関係（仮想口座 / サブ口座）を追加。
-    private func applyV3() {
-        exec("ALTER TABLE accounts ADD COLUMN parent_id INTEGER REFERENCES accounts(id)")
+    private func applyV3() throws {
+        try migrate(3, "ALTER TABLE accounts ADD COLUMN parent_id INTEGER REFERENCES accounts(id)")
     }
 
     /// v4: クレジットカードの締め日・支払日・引き落とし元口座を追加。
-    private func applyV4() {
-        exec("ALTER TABLE accounts ADD COLUMN closing_day INTEGER")
-        exec("ALTER TABLE accounts ADD COLUMN payment_day INTEGER")
-        exec("ALTER TABLE accounts ADD COLUMN payment_month_offset INTEGER NOT NULL DEFAULT 1")
-        exec("ALTER TABLE accounts ADD COLUMN payment_account_id INTEGER REFERENCES accounts(id)")
+    private func applyV4() throws {
+        try migrate(4, "ALTER TABLE accounts ADD COLUMN closing_day INTEGER")
+        try migrate(4, "ALTER TABLE accounts ADD COLUMN payment_day INTEGER")
+        try migrate(4, "ALTER TABLE accounts ADD COLUMN payment_month_offset INTEGER NOT NULL DEFAULT 1")
+        try migrate(4, "ALTER TABLE accounts ADD COLUMN payment_account_id INTEGER REFERENCES accounts(id)")
     }
 
     /// デフォルトカテゴリ・現金口座・既定設定を投入する。
-    private func seedDefaults() {
-        run("INSERT INTO accounts(name, type, initial_balance, sort_order, archived) VALUES(?,?,?,?,?)",
+    private func seedDefaults() throws {
+        try migrate(1,
+            "INSERT INTO accounts(name, type, initial_balance, sort_order, archived) VALUES(?,?,?,?,?)",
             [.text("現金"), .text("cash"), .int(0), .int(0), .int(0)])
 
         let expenseCats: [(String, Int)] = [
@@ -142,16 +160,16 @@ extension Database {
         ]
 
         for (i, c) in expenseCats.enumerated() {
-            run("INSERT INTO categories(name, type, color, sort_order) VALUES(?,?,?,?)",
-                [.text(c.0), .text("expense"), .int(Int64(c.1)), .int(Int64(i))])
+            try migrate(1, "INSERT INTO categories(name, type, color, sort_order) VALUES(?,?,?,?)",
+                        [.text(c.0), .text("expense"), .int(Int64(c.1)), .int(Int64(i))])
         }
         for (i, c) in incomeCats.enumerated() {
-            run("INSERT INTO categories(name, type, color, sort_order) VALUES(?,?,?,?)",
-                [.text(c.0), .text("income"), .int(Int64(c.1)), .int(Int64(i))])
+            try migrate(1, "INSERT INTO categories(name, type, color, sort_order) VALUES(?,?,?,?)",
+                        [.text(c.0), .text("income"), .int(Int64(c.1)), .int(Int64(i))])
         }
 
         for (k, v) in [("currency", "JPY"), ("theme", "system"), ("month_start_day", "1")] {
-            run("INSERT INTO settings(key, value) VALUES(?,?)", [.text(k), .text(v)])
+            try migrate(1, "INSERT INTO settings(key, value) VALUES(?,?)", [.text(k), .text(v)])
         }
     }
 }

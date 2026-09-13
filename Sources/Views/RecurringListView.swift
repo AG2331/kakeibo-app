@@ -5,6 +5,7 @@ struct RecurringListView: View {
     @EnvironmentObject private var store: AppStore
     @State private var editing: RecurringRule?
     @State private var creating = false
+    @State private var deleteError: String?
 
     var body: some View {
         List {
@@ -20,10 +21,13 @@ struct RecurringListView: View {
                         .buttonStyle(.plain)
                 }
                 .onDelete { offsets in
-                    offsets.map { store.recurringRules[$0] }.forEach(store.deleteRecurring)
+                    for rule in offsets.map({ store.recurringRules[$0] }) {
+                        if let error = store.deleteRecurring(rule) { deleteError = error; break }
+                    }
                 }
             }
         }
+        .errorAlert("削除できません", message: $deleteError)
         .navigationTitle("定期取引")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -181,7 +185,7 @@ struct RecurringEditView: View {
             nextDate: Dates.ymd(nextDate),
             endDate: hasEnd ? Dates.ymd(endDate) : nil
         )
-        store.saveRecurring(rule)
+        if let error = store.saveRecurring(rule) { message = error; return }
         dismiss()
     }
 }

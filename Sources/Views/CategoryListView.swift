@@ -40,11 +40,7 @@ struct CategoryListView: View {
         .sheet(item: $creatingType) { type in
             CategoryEditView(existing: nil, type: type)
         }
-        .alert("削除できません", isPresented: .constant(deleteError != nil)) {
-            Button("OK") { deleteError = nil }
-        } message: {
-            Text(deleteError ?? "")
-        }
+        .errorAlert("削除できません", message: $deleteError)
     }
 
     /// 親カテゴリの行。子があれば折りたたみ用のシェブロンを左に表示する。
@@ -115,6 +111,7 @@ struct CategoryEditView: View {
     @State private var name: String
     @State private var color: Int
     @State private var parentId: Int64?
+    @State private var saveError: String?
 
     /// 選択肢の色パレット（ARGB）。
     private let palette: [Int] = [
@@ -172,6 +169,7 @@ struct CategoryEditView: View {
                     .padding(.vertical, 4)
                 }
             }
+            .errorAlert("保存できません", message: $saveError)
             .navigationTitle(existing == nil ? "\(type.label)カテゴリを追加" : "カテゴリを編集")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -198,7 +196,7 @@ struct CategoryEditView: View {
             color: color,
             sortOrder: existing?.sortOrder ?? 0
         )
-        store.saveCategory(category)
+        if let error = store.saveCategory(category) { saveError = error; return }
         dismiss()
     }
 }

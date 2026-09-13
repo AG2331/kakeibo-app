@@ -1,6 +1,21 @@
 import Foundation
 import SQLite3
 
+/// DB を開けない・マイグレーションできないなど、起動を妨げる失敗。
+enum DatabaseError: LocalizedError {
+    case cannotOpen(String)
+    case migrationFailed(version: Int32, detail: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .cannotOpen(let detail):
+            return "データベースを開けませんでした。（\(detail)）"
+        case .migrationFailed(let version, let detail):
+            return "データベースの更新（v\(version)）に失敗しました。（\(detail)）"
+        }
+    }
+}
+
 /// バインド用の値。
 enum SQLValue {
     case int(Int64)
@@ -42,7 +57,7 @@ final class Database {
     /// migrate: false にするとマイグレーションを行わない（復元候補ファイルの検査用）。
     init(path: String, migrate: Bool = true) throws {
         if sqlite3_open(path, &db) != SQLITE_OK {
-            throw error("open failed")
+            throw DatabaseError.cannotOpen(lastErrorMessage() ?? "unknown")
         }
         exec("PRAGMA foreign_keys = ON")
         if migrate { try migrateIfNeeded() }
@@ -132,13 +147,8 @@ final class Database {
         return stmt
     }
 
-    private func lastErrorMessage() -> String? {
+    /// 直近の SQLite エラーメッセージ。マイグレーション側からも使う。
+    func lastErrorMessage() -> String? {
         db.map { String(cString: sqlite3_errmsg($0)) }
-    }
-
-    private func error(_ msg: String) -> NSError {
-        let detail = lastErrorMessage() ?? ""
-        return NSError(domain: "Database", code: 1,
-                       userInfo: [NSLocalizedDescriptionKey: "\(msg): \(detail)"])
     }
 }

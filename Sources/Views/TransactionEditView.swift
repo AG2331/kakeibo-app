@@ -118,7 +118,9 @@ struct TransactionEditView: View {
             }
             .confirmationDialog("この取引を削除しますか？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
                 Button("削除", role: .destructive) {
-                    if let existing { store.delete(existing); dismiss() }
+                    if let existing {
+                        if let error = store.delete(existing) { validationMessage = error } else { dismiss() }
+                    }
                 }
                 Button("キャンセル", role: .cancel) {}
             }
@@ -154,7 +156,7 @@ struct TransactionEditView: View {
             memo: memo.trimmingCharacters(in: .whitespaces).isEmpty ? nil : memo,
             createdAt: existing?.createdAt ?? Int64(Date().timeIntervalSince1970 * 1000)
         )
-        store.save(record)
+        if let error = store.save(record) { validationMessage = error; return }
         dismiss()
     }
 }

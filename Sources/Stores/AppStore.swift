@@ -36,14 +36,19 @@ final class AppStore: ObservableObject {
         reload()
     }
 
+    /// 既定の DB ファイルの場所。
+    static func defaultDatabasePath() throws -> String {
+        let dir = try FileManager.default.url(for: .applicationSupportDirectory,
+                                              in: .userDomainMask,
+                                              appropriateFor: nil, create: true)
+        return dir.appendingPathComponent("kakeibo.sqlite").path
+    }
+
     /// アプリのドキュメント配下に DB を作って開く。
-    static func makeDefault() -> AppStore {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory,
-                                           in: .userDomainMask).first!
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let path = dir.appendingPathComponent("kakeibo.sqlite").path
-        // swiftlint:disable:next force_try
-        let db = try! Database(path: path)
+    /// 開けない場合は投げる（握り潰すと空のデータで起動してしまうため）。
+    static func makeDefault() throws -> AppStore {
+        let path = try defaultDatabasePath()
+        let db = try Database(path: path)
         return AppStore(db: db, dbPath: path)
     }
 
@@ -83,16 +88,27 @@ final class AppStore: ObservableObject {
 
     // MARK: - 取引
 
-    func save(_ record: TxRecord) {
-        if record.id == nil { transactions.insert(record) } else { transactions.update(record) }
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func save(_ record: TxRecord) -> String? {
+        let ok = record.id == nil ? transactions.insert(record) : transactions.update(record)
+        guard ok else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
-    func delete(_ record: TxRecord) {
-        guard let id = record.id else { return }
-        transactions.delete(id: id)
+    /// 削除できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func delete(_ record: TxRecord) -> String? {
+        guard let id = record.id else { return "この取引は保存されていません。" }
+        guard transactions.delete(id: id) else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
+
+    /// 書き込みに失敗したときの共通メッセージ。
+    static let writeFailureMessage =
+        "保存できませんでした。端末の空き容量を確認して、もう一度お試しください。"
 
     // MARK: - カテゴリ管理
 
@@ -118,15 +134,20 @@ final class AppStore: ObservableObject {
         categories(of: type).filter { $0.parentId == nil && $0.id != selfId }
     }
 
-    func saveCategory(_ category: Category) {
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func saveCategory(_ category: Category) -> String? {
+        let ok: Bool
         if category.id == nil {
             var c = category
             c.sortOrder = (categories(of: category.type).map(\.sortOrder).max() ?? -1) + 1
-            categories.insert(c)
+            ok = categories.insert(c)
         } else {
-            categories.update(category)
+            ok = categories.update(category)
         }
+        guard ok else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
     /// 削除できなければ理由を返す（nil = 削除成功）。
@@ -160,15 +181,20 @@ final class AppStore: ObservableObject {
 
     // MARK: - 口座管理
 
-    func saveAccount(_ account: Account) {
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func saveAccount(_ account: Account) -> String? {
+        let ok: Bool
         if account.id == nil {
             var a = account
             a.sortOrder = (accountList.map(\.sortOrder).max() ?? -1) + 1
-            accounts.insert(a)
+            ok = accounts.insert(a)
         } else {
-            accounts.update(account)
+            ok = accounts.update(account)
         }
+        guard ok else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
     /// 削除できなければ理由を返す（nil = 削除成功）。
@@ -239,18 +265,35 @@ final class AppStore: ObservableObject {
         return (grand, nodes)
     }
 
-    /// クレジット口座の締め日・支払日設定から、未精算額・次回請求予定を計算する。
+    /// クレジット口座の締め日・支払日設定から、未精算額・請求状況を計算する。
+    /// 締め日以降にカード口座へ入った振替を「支払い済み」とみなすため、
+    /// 引き落としを記録すると請求額は自動的に消える。
     func creditCardStatement(for account: Account) -> CreditCardStatementInfo? {
         guard account.hasStatementConfig, let id = account.id,
               let closingDay = account.closingDay, let paymentDay = account.paymentDay else { return nil }
+
+        // 直近で締まった請求
         let (start, end) = CreditCardCycle.lastClosedPeriod(closingDay: closingDay)
-        let due = CreditCardCycle.paymentDate(periodEnd: end, paymentDay: paymentDay,
-                                              monthOffset: account.paymentMonthOffset)
-        let suggested = transactions.expenseSum(accountId: id, start: start, end: end)
-        let outstanding = max(0, -(accountBalances[id] ?? 0))
-        return CreditCardStatementInfo(accountId: id, periodStart: start, periodEnd: end,
-                                       outstandingAmount: outstanding, nextPaymentDate: due,
-                                       suggestedAmount: suggested)
+        let billed = transactions.expenseSum(accountId: id, start: start, end: end)
+        let paid = transactions.transferInSum(accountId: id, since: end)
+        let due = max(0, billed - paid)
+        let dueDate = CreditCardCycle.paymentDate(periodEnd: end, paymentDay: paymentDay,
+                                                  monthOffset: account.paymentMonthOffset)
+
+        // まだ締まっていない進行中サイクル
+        let (openStart, openEnd) = CreditCardCycle.openPeriod(closingDay: closingDay)
+        let upcoming = transactions.expenseSum(accountId: id, start: openStart, end: openEnd)
+        let upcomingDue = CreditCardCycle.paymentDate(periodEnd: openEnd, paymentDay: paymentDay,
+                                                      monthOffset: account.paymentMonthOffset)
+
+        return CreditCardStatementInfo(
+            accountId: id,
+            outstandingAmount: max(0, -(accountBalances[id] ?? 0)),
+            dueAmount: due,
+            dueDate: dueDate,
+            isOverdue: due > 0 && dueDate < Dates.today(),
+            upcomingAmount: upcoming,
+            upcomingDueDate: upcomingDue)
     }
 
     // MARK: - 設定
@@ -341,23 +384,34 @@ final class AppStore: ObservableObject {
             .first { $0.categoryId == categoryId }?.amount ?? 0
     }
 
-    func setBudget(categoryId: Int64?, amount: Int) {
-        budgets.set(yearMonth: currentYearMonth, categoryId: categoryId, amount: amount)
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func setBudget(categoryId: Int64?, amount: Int) -> String? {
+        guard budgets.set(yearMonth: currentYearMonth, categoryId: categoryId,
+                          amount: amount) else { return Self.writeFailureMessage }
         objectWillChange.send()
+        return nil
     }
 
     // MARK: - 定期取引
 
-    func saveRecurring(_ rule: RecurringRule) {
-        if rule.id == nil { recurring.insert(rule) } else { recurring.update(rule) }
+    /// 保存できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func saveRecurring(_ rule: RecurringRule) -> String? {
+        let ok = rule.id == nil ? recurring.insert(rule) : recurring.update(rule)
+        guard ok else { return Self.writeFailureMessage }
         applyDueRecurring()
         reload()
+        return nil
     }
 
-    func deleteRecurring(_ rule: RecurringRule) {
-        guard let id = rule.id else { return }
-        recurring.delete(id: id)
+    /// 削除できなければ理由を返す（nil = 成功）。
+    @discardableResult
+    func deleteRecurring(_ rule: RecurringRule) -> String? {
+        guard let id = rule.id else { return "この定期取引は保存されていません。" }
+        guard recurring.delete(id: id) else { return Self.writeFailureMessage }
         reload()
+        return nil
     }
 
     /// next_date が今日以前のルールから取引を生成し、next_date を進める。

@@ -16,19 +16,20 @@ struct CategoryRepository {
     }
 
     @discardableResult
-    func insert(_ c: Category) -> Int64 {
+    func insert(_ c: Category) -> Bool {
         db.run(
             "INSERT INTO categories(name, type, parent_id, icon, color, sort_order) VALUES(?,?,?,?,?,?)",
             [.text(c.name), .text(c.type.rawValue), SQLValue(c.parentId),
-             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder))]).rowId
+             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder))]).ok
     }
 
-    func update(_ c: Category) {
-        guard let id = c.id else { return }
-        db.run(
+    @discardableResult
+    func update(_ c: Category) -> Bool {
+        guard let id = c.id else { return false }
+        return db.run(
             "UPDATE categories SET name=?, type=?, parent_id=?, icon=?, color=?, sort_order=? WHERE id=?",
             [.text(c.name), .text(c.type.rawValue), SQLValue(c.parentId),
-             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder)), .int(id)])
+             SQLValue(c.icon), SQLValue(c.color), .int(Int64(c.sortOrder)), .int(id)]).ok
     }
 
     /// 削除できたかを返す。他から参照されている場合は false。

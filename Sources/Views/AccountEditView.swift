@@ -15,6 +15,7 @@ struct AccountEditView: View {
     @State private var paymentDay: Int
     @State private var paymentMonthOffset: Int
     @State private var paymentAccountId: Int64?
+    @State private var saveError: String?
 
     init(existing: Account?) {
         self.existing = existing
@@ -94,6 +95,7 @@ struct AccountEditView: View {
                     }
                 }
             }
+            .errorAlert("保存できません", message: $saveError)
             .navigationTitle(existing == nil ? "口座を追加" : "口座を編集")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -124,7 +126,7 @@ struct AccountEditView: View {
             paymentMonthOffset: paymentMonthOffset,
             paymentAccountId: type == .credit ? paymentAccountId : nil
         )
-        store.saveAccount(account)
+        if let error = store.saveAccount(account) { saveError = error; return }
         dismiss()
     }
 }

@@ -93,18 +93,14 @@ struct AccountsOverviewView: View {
                 let card = store.accountList.first { $0.id == info.accountId }
                 TransactionEditView(existing: nil, draft: TxDraft(
                     type: .transfer,
-                    amount: info.suggestedAmount,
-                    date: Dates.parse(info.nextPaymentDate),
+                    amount: info.dueAmount,
+                    date: Dates.parse(info.dueDate),
                     accountId: card?.paymentAccountId,
                     toAccountId: info.accountId,
                     memo: "カード引き落とし"
                 ))
             }
-            .alert("削除できません", isPresented: .constant(deleteError != nil)) {
-                Button("OK") { deleteError = nil }
-            } message: {
-                Text(deleteError ?? "")
-            }
+            .errorAlert("削除できません", message: $deleteError)
         }
     }
 
@@ -178,24 +174,39 @@ struct AccountsOverviewView: View {
         .padding(.leading, 8)
     }
 
-    /// クレジット口座の未精算額・次回請求予定を表示する行。
+    /// クレジット口座の未精算額・請求状況を表示する行。
+    /// 引き落としを記録済みなら請求は消え、進行中サイクルの見込みに切り替わる。
     private func creditStatementRow(_ info: CreditCardStatementInfo) -> some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("未精算額 \(Money.format(info.outstandingAmount))")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                Text("次回請求(\(Dates.displayDate(info.nextPaymentDate))): \(Money.format(info.suggestedAmount))")
+                Text(statementCaption(info))
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(info.isOverdue ? AnyShapeStyle(TxPalette.expense)
+                                                    : AnyShapeStyle(.tertiary))
             }
             Spacer()
-            Button("引き落としを記録") { settlementDraft = info }
-                .font(.caption2)
-                .buttonStyle(.bordered)
+            // 支払うべき請求があるときだけ出す（支払い済みの再記録＝二重払いを防ぐ）
+            if !info.isSettled {
+                Button("引き落としを記録") { settlementDraft = info }
+                    .font(.caption2)
+                    .buttonStyle(.bordered)
+            }
         }
         .padding(.leading, 32)
         .padding(.vertical, 2)
+    }
+
+    private func statementCaption(_ info: CreditCardStatementInfo) -> String {
+        if info.isOverdue {
+            return "支払期限超過(\(Dates.displayDate(info.dueDate))): \(Money.format(info.dueAmount))"
+        }
+        if !info.isSettled {
+            return "次回請求(\(Dates.displayDate(info.dueDate))): \(Money.format(info.dueAmount))"
+        }
+        return "次回請求(\(Dates.displayDate(info.upcomingDueDate))予定): \(Money.format(info.upcomingAmount))"
     }
 
     private func icon(for type: AccountType) -> String {
