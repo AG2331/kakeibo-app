@@ -120,6 +120,18 @@ struct TransactionRepository {
         ).first?.int("s") ?? 0
     }
 
+    /// 指定口座に関わる取引（出金元・振替先の両方）。新しい順。
+    func forAccount(id: Int64, limit: Int = 500) -> [TxRecord] {
+        db.query(
+            """
+            SELECT * FROM transactions
+            WHERE account_id = ? OR to_account_id = ?
+            ORDER BY date DESC, created_at DESC
+            LIMIT ?
+            """, [.int(id), .int(id), .int(Int64(limit))]
+        ).map(Self.map)
+    }
+
     /// 口座を参照する取引数（出金元/振替先の両方）。
     func countByAccount(id: Int64) -> Int {
         db.query(

@@ -369,6 +369,26 @@ final class AppStore: ObservableObject {
         transactions.range(start: day, end: day)
     }
 
+    // MARK: - 口座の詳細
+
+    /// 指定口座に関わる取引（出金元・振替先の両方）。新しい順。
+    func transactions(ofAccount id: Int64) -> [TxRecord] {
+        transactions.forAccount(id: id)
+    }
+
+    /// 口座の残高推移（各月末時点の残高。最後の点は現在の残高）。
+    func balanceTrend(accountId: Int64, months: Int = 6) -> [BalancePoint] {
+        (0..<months).reversed().map { offset in
+            let anchor = Dates.shiftMonth(selectedMonth, by: -offset)
+            let (_, end) = Dates.monthRange(anchor, startDay: 1)
+            // 未来の月はまだ確定していないので、今日までの残高を使う
+            let asOf = min(end, Dates.today())
+            return BalancePoint(month: anchor,
+                                label: Dates.shortMonthLabel(anchor),
+                                balance: accounts.balance(id: accountId, asOf: asOf))
+        }
+    }
+
     // MARK: - 予算管理
 
     /// 当月の予算消化状況。全体予算 + カテゴリ別予算（設定があるもの）。

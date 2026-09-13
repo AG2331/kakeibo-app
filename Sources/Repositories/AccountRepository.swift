@@ -66,21 +66,26 @@ struct AccountRepository {
     }
 
     /// 現在残高 = 初期残高 + 入金/振替先 - 出金/振替元。
-    func balance(id: Int64) -> Int {
+    /// asOf を渡すとその日までの残高（残高推移のグラフ用）。
+    func balance(id: Int64, asOf: String? = nil) -> Int {
         let initial = db.query(
             "SELECT initial_balance FROM accounts WHERE id=?", [.int(id)]
         ).first?.int("initial_balance") ?? 0
 
+        let cutoff = asOf == nil ? "" : " AND date <= ?"
+        var args: [SQLValue] = [.int(id), .int(id)]
+        if let asOf { args.append(.text(asOf)) }
+
         let inflow = sum(
             """
             SELECT COALESCE(SUM(amount),0) AS s FROM transactions
-            WHERE (type='income' AND account_id=?) OR (type='transfer' AND to_account_id=?)
-            """, [.int(id), .int(id)])
+            WHERE ((type='income' AND account_id=?) OR (type='transfer' AND to_account_id=?))\(cutoff)
+            """, args)
         let outflow = sum(
             """
             SELECT COALESCE(SUM(amount),0) AS s FROM transactions
-            WHERE (type='expense' AND account_id=?) OR (type='transfer' AND account_id=?)
-            """, [.int(id), .int(id)])
+            WHERE ((type='expense' AND account_id=?) OR (type='transfer' AND account_id=?))\(cutoff)
+            """, args)
         return initial + inflow - outflow
     }
 
