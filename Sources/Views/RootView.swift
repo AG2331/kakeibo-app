@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// アプリのルート。ホーム / レポート / 口座 / 設定 のタブ構成。
+/// アプリのルート。ホーム / 口座 / 履歴 / レポート / 設定 のタブ構成。
 struct RootView: View {
     @EnvironmentObject private var store: AppStore
 
@@ -9,14 +9,14 @@ struct RootView: View {
             HomeView()
                 .tabItem { Label("ホーム", systemImage: "list.bullet.rectangle") }
 
+            AccountsOverviewView()
+                .tabItem { Label("口座", systemImage: "banknote") }
+
             HistoryView()
                 .tabItem { Label("履歴", systemImage: "calendar") }
 
             ReportsView()
                 .tabItem { Label("レポート", systemImage: "chart.pie") }
-
-            AccountsOverviewView()
-                .tabItem { Label("口座", systemImage: "banknote") }
 
             NavigationStack {
                 SettingsView()
