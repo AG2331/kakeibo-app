@@ -29,6 +29,34 @@ brew install xcodegen   # 初回のみ
 xcodegen generate
 ```
 
+## テスト
+
+```bash
+xcodebuild test -project Kakeibo.xcodeproj -scheme Kakeibo \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+```
+
+`Tests/` に 83 件のユニットテストがあります（締め日サイクル、DBの書き込みエラー検知、
+バックアップ検証、集計ロジック、削除ガード、復元など）。
+
+## 実機へのビルド・転送
+
+USB か同じ Wi-Fi で iPhone をつないだ状態で:
+
+```bash
+./scripts/deploy-iphone.sh                  # 1回だけビルドして転送・起動
+./scripts/deploy-iphone.sh --watch          # ソースの変更を検知して毎回転送
+./scripts/deploy-iphone.sh --interval 30    # 30分ごとに転送
+./scripts/deploy-iphone.sh --list-devices   # 認識しているデバイスを確認
+```
+
+署名チーム（Team ID）はプロビジョニングプロファイルから自動検出します。
+うまく検出できない場合は `--team <TEAM_ID>` か環境変数 `KAKEIBO_TEAM_ID` で指定してください。
+初回は Xcode で一度実機ビルドしておくと確実です。
+
+ビルドログは `.build/logs/` に残ります。常駐させたい場合はスクリプト末尾の
+launchd の例を参照してください。
+
 ## プロジェクト構成
 
 ```

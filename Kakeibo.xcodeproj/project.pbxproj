@@ -426,7 +426,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.kakeibo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.util.kakeibo;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -445,7 +445,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.kakeibo;
+				PRODUCT_BUNDLE_IDENTIFIER = com.util.kakeibo;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -461,7 +461,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.kakeibo.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.util.kakeibo.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kakeibo.app/Kakeibo";
@@ -538,7 +538,7 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.kakeibo.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.util.kakeibo.tests;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kakeibo.app/Kakeibo";
